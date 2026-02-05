@@ -1,96 +1,91 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
+import getProfileInfo from '@salesforce/apex/TechProfile360Controller.getProfileInfo';
+import getCustomerMetrics from '@salesforce/apex/TechProfile360Controller.getCustomerMetrics';
 
 export default class TechPatient360Profile extends LightningElement {
     @api recordId;
+    unifiedId;
+    
+    // Datos del Paciente (ahora dinámicos)
+    @track patientData = {
+        firstName: '',
+        lastName: '',
+        age: 0,
+        gender: '',
+        zipCode: '',
+        email: '',
+        phone: '',
+        idPos: '',
+        totalSales: 0,
+        orderCount: 0,
+        avgTicket: 0,
+        daysSinceLastPurchase: 0,
+        lastBranch: '',
+        lastCategory: '',
+        retailTotal: 0,
+        retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+        ecommerceTotal: 0,
+        ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+        medicalHistory: [],
+        medicalNotes: '',
+        familyRelations: []
+    };
+
+    @wire(getProfileInfo, { recordId: '$recordId' })
+    wiredProfile({ error, data }) {
+        if (data) {
+            console.log('Profile Data:', data);
+            this.unifiedId = data.ssot__Id__c;
+            this.processProfileData(data);
+        } else if (error) {
+            console.error('Error fetching profile:', error);
+        }
+    }
+
+    @wire(getCustomerMetrics, { unifiedId: '$unifiedId' })
+    wiredMetrics({ error, data }) {
+        if (data) {
+            console.log('Metrics Data:', data);
+            this.patientData = {
+                ...this.patientData,
+                totalSales: data.totalSales || 0,
+                orderCount: data.orderCount || 0,
+                avgTicket: data.avgTicket || 0,
+                daysSinceLastPurchase: data.daysSinceLastPurchase || 0
+            };
+        } else if (error) {
+            console.error('Error fetching metrics:', error);
+        }
+    }
+
+    processProfileData(data) {
+        // Cálculo de edad
+        let age = 0;
+        if (data.FECHA_NACIMIENTO_dt__c) {
+            const birthDate = new Date(data.FECHA_NACIMIENTO_dt__c);
+            const today = new Date();
+            age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+        }
+
+        // Mapeo de datos dinámicos (Paso 1: Perfil básico)
+        this.patientData = {
+            ...this.patientData, // Mantenemos los placeholders para lo que aún no conectamos
+            firstName: data.ssot__FirstName__c || '',
+            lastName: `${data.Apellido_Paterno__c || ''} ${data.Apellido_Materno__c || ''}`.trim() || data.ssot__LastName__c,
+            age: age,
+            gender: data.ssot__GenderId__c || 'N/A',
+            zipCode: data.CODIGO_POSTAL__c || 'N/A',
+            email: data.Email__c || 'N/A',
+            idPos: data.Id_POS__c || 'N/A'
+        };
+    }
     
     // Control de Tabs
     @track activeTab = 'expediente';
-    
-    // Control de Secciones Expandibles - Expediente Médico
-    @track isAntecedenteOpen = false;
-    @track isDriverVisualOpen = false;
-    @track isPreguntasPoderOpen = false;
-    @track isGraduacionesOpen = false;
-    @track isFamiliaOpen = false;
-    
-    // Paginación
-    @track currentPage = 1;
-    @track itemsPerPage = 10;
-    @track totalItems = 0;
-    
-    // ==================== DATOS HARDCODEADOS ====================
-    
-    // Datos del Paciente
-    patientData = {
-        // Información General
-        firstName: 'Alejandra',
-        lastName: 'Martinez',
-        age: 21,
-        gender: 'Mujer',
-        zipCode: '53237',
-        email: 'alejandra.martinez@example.com',
-        phone: '(123)-456-7890',
-        idPos: '1234567',
-        
-        // Resumen del Cliente
-        totalSales: 18318.00,
-        orderCount: 7,
-        avgTicket: 2617.00,
-        daysSinceLastPurchase: 50,
-        lastBranch: 'MEGA COYOACAN (A844)',
-        lastCategory: 'SOLARES',
-        
-        // Resumen de Compras - Retail
-        retailTotal: 8319.00,
-        retailCategories: {
-            Solares: 1,
-            LentesContacto: 0,
-            Oftalmicos: 1
-        },
-        
-        // Resumen de Compras - Ecommerce
-        ecommerceTotal: 10000.00,
-        ecommerceCategories: {
-            Solares: 0,
-            LentesContacto: 5,
-            Oftalmicos: 0
-        },
-        
-        // Antecedentes Médicos
-        medicalHistory: [
-            'Ardor/Irritación',
-            'Diabetes',
-            'Hipertensión',
-            'Lagaña',
-            'Comezón',
-            'Dolor de cabeza',
-            'Infección',
-            'Resequedad Ocular',
-            'Destellos de Luz',
-            'Embarazo',
-            'Lagrimeo',
-            'Visión Borrosa'
-        ],
-        medicalNotes: 'Sin enf/Sin med. Alto uso de aparatos',
-        
-        // Familia
-        familyRelations: [
-            {
-                name: 'Paula Adelaida Chavez Martinez',
-                relation: 'Hermana',
-                idPos: '12736992',
-                recordId: '001XX000003XXXAAA',
-                isLast: false
-            },
-            {
-                name: 'Osel Chavez Martinez',
-                relation: 'Hermano',
-                idPos: '12736994',
-                recordId: '001XX000003XXXBBB',
-                isLast: true
-            }
-        ]
-    };
     
     // Diagnósticos
     lastDiagnosisDate = '26 Marzo 2025';
