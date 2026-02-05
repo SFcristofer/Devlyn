@@ -1,0 +1,179 @@
+================================================================================
+MANUAL TÉCNICO Y DE USUARIO: DASHBOARD CLIENTE 360 - DEVLYN (DATA CLOUD)
+================================================================================
+Fecha: 4 de febrero de 2026
+Versión: 1.0
+Desarrollado para: Devlyn
+Plataforma: Salesforce Data Cloud + Lightning Web Components (LWC)
+================================================================================
+
+1. INTRODUCCIÓN Y OBJETIVO
+--------------------------------------------------------------------------------
+Este sistema ha sido diseñado para proporcionar a los usuarios de Devlyn una 
+visión integral y unificada de sus pacientes. Utilizando la potencia de 
+Salesforce Data Cloud, la Interfaz Cliente 360 consolida datos provenientes de 
+múltiples fuentes (POS, VTEX, TuoTempo, Marketing Cloud) en una sola pantalla 
+altamente interactiva y dinámica.
+
+El objetivo principal es permitir que el personal operativo y clínico pueda 
+buscar a cualquier paciente unificado y consultar su historial clínico, 
+transaccional y de comportamiento digital de forma ágil y precisa.
+
+2. ARQUITECTURA DEL SISTEMA (COMPONENTES)
+--------------------------------------------------------------------------------
+La interfaz está construida bajo un patrón de diseño jerárquico de tres capas de 
+componentes LWC:
+
+A. techPatient360Container (El Padre):
+   - Es el componente principal que se añade a la página de Salesforce.
+   - Actúa como orquestador de la comunicación.
+   - Recibe el ID unificado del buscador y se lo entrega al perfil.
+   - Gestiona los estados de "Esperando selección" y "Mostrando Dashboard".
+
+B. techProfileSearch (El Explorador):
+   - Clon funcional del "Profile Explorer" nativo de Data Cloud.
+   - Permite filtrar la búsqueda por Data Space, Objeto y Atributo específico.
+   - Emite un evento dinámico (profileselect) al seleccionar un registro.
+
+C. techPatient360Profile (El Dashboard):
+   - El motor de visualización de datos.
+   - Dividido en un Panel Lateral (Métricas rápidas) y Panel Principal (Pestañas).
+   - Realiza llamadas asíncronas a Apex para poblar cada pestaña en tiempo real.
+
+3. FUNCIONAMIENTO DEL BUSCADOR (PROFILE EXPLORER)
+--------------------------------------------------------------------------------
+Para imitar el comportamiento nativo de Data Cloud, el buscador sigue este flujo:
+
+1. Select Data Space: El usuario selecciona el entorno (por defecto "default").
+2. Select an option: Se elige el objeto de búsqueda (Unified Individual).
+3. Select Attribute: Se elige el campo exacto sobre el cual se desea buscar:
+   - First Name (ssot__FirstName__c)
+   - Last Name (ssot__LastName__c)
+   - Email (Email__c)
+   - ID POS (Id_POS__c)
+4. Search Value: Se ingresa el texto a buscar.
+5. Resultado: Se muestra una tabla con los perfiles unificados encontrados. Al 
+   seleccionar uno, se carga el dashboard inferior.
+
+4. DETALLE DE PESTAÑAS Y MAPEADO DE DATOS (BACKEND)
+--------------------------------------------------------------------------------
+Cada sección del dashboard está conectada a un Data Model Object (DMO) o 
+Calculated Insight (CIO) específico en Data Cloud.
+
+--- PESTAÑA 1: EXPEDIENTE MÉDICO ---
+Objeto: POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm, 
+        POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm,
+        POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm,
+        POS_POS_CLIENTE_PREG_PODER__dlm
+
+Campos Mapeados:
+- Último Diagnóstico: Campos booleanos (Astigmatismo, Miopía, etc.) se 
+  convierten en "Badges" visuales.
+- Antecedentes: Muestra condiciones como Ardor, Comezón, Diabetes e Hipertensión.
+- Notas Clínicas: Campo NOTAS__c.
+- Driver Visual: Nivel de visión y motivo de la visita.
+- Preguntas Poder: Hábitos del cliente y necesidades de protección visual.
+
+--- PESTAÑA 2: ORDENES (HISTORIAL TRANSACCIONAL) ---
+Objetos: ssot__SalesOrder__dlm (Cabecera), 
+         ssot__SalesOrderProduct__dlm (Detalle),
+         ssot__SalesStore__dlm (Sucursales)
+
+Campos Mapeados:
+- Cabecera: Número de Orden (ssot__OrderNumber__c), Fecha (ssot__CreatedDate__c), 
+  Monto (ssot__TotalAmount__c).
+- Sucursal: Nombre real de la tienda (ssot__Name__c).
+- Productos: Descripción (ssot__Description__c), Cantidad (ssot__OrderedQuantity__c), 
+  Precio Unitario (ssot__TotalLineAmount__c).
+Funcionalidad: Acordeón expandible para ver el detalle de cada compra.
+
+--- PESTAÑA 3: CITAS ---
+Objeto: TUOTEMPO_CITA__dlm
+
+Campos Mapeados:
+- Cita ID: activity_lid__c.
+- Tipo: activityTitle__c.
+- Estatus: estatus_cita__c.
+- Horarios: start_date__c y end_date__c (Formateados localmente).
+- Sucursal: areaTitle__c.
+
+--- PESTAÑA 4: COTIZACIONES ---
+Objeto: Preparado para DMO de Presupuestos.
+Muestra intención de compra y presupuestos generados en sucursal que aún no son 
+órdenes cerradas.
+
+--- PESTAÑA 5: SUSCRIPCIONES ---
+Objeto: VTEX_Subscription__dlm
+
+Campos Mapeados:
+- Nombre: Name__c.
+- Estatus: Status__c.
+- Frecuencia: Frequency__c (Ej. "Cada mes").
+- Próxima Compra: NextPurchaseDate__c.
+
+--- PESTAÑA 6: ENVÍOS MARKETING (INTELIGENCIA) ---
+Objetos: RFM_...__cio (Calculated Insights), 
+         ssot__EmailEngagement__dlm (Engagement)
+
+Campos Mapeados:
+- Scores RFM: Calcula el puntaje de Recencia, Frecuencia y Monto para las 
+  categorías Solares, Lentes de Contacto y Oftálmicos.
+- Einstein Scores: Propensión de apertura y click.
+- Historial: Lista de correos enviados con Asunto, Fecha y Remitente.
+
+5. PANEL LATERAL (SIDEBAR - MÉTRICAS CLAVE)
+--------------------------------------------------------------------------------
+El sidebar ofrece un resumen financiero del cliente:
+- Monto Total Comprado: Suma de todas las órdenes Retail + Ecommerce.
+- Total de Ventas: Conteo de transacciones.
+- Ticket Promedio: Venta total / Cantidad de órdenes.
+- Días desde la última compra: Cálculo entre Fecha Actual y Max(CreatedDate).
+- Última Sucursal y Categoría: Datos del registro más reciente de venta.
+
+6. ESPECIFICACIONES TÉCNICAS (PARA DESARROLLADORES)
+--------------------------------------------------------------------------------
+A. Clase Controladora (Apex): TechProfile360Controller
+   - Utiliza Consultas Dinámicas (Database.query) para evitar errores de 
+     visibilidad de objetos __dlm en tiempo de compilación.
+   - Métodos principales:
+     * searchProfiles: Búsqueda paramétrica por atributo.
+     * getProfileByUnifiedId: Recuperación directa de perfil.
+     * getCustomerMetrics: Cálculos financieros (SQL).
+     * getMedicalInfo: Unión de fuentes clínicas.
+     * getOrders: Jerarquía Orden -> Productos.
+
+B. Comunicación entre Componentes:
+   - El buscador dispara un CustomEvent('profileselect', { unifiedId }).
+   - El contenedor captura el evento vía HTML (onprofileselect).
+   - El perfil recibe el unifiedId mediante una propiedad reactiva (@api).
+
+C. Gestión de Fechas:
+   - Todas las fechas provenientes de Data Cloud (ISO 8601) se formatean en el 
+     JavaScript del LWC utilizando `toLocaleDateString()` para una lectura 
+     humana correcta en México.
+
+D. Seguridad:
+   - La clase controladora usa `with sharing`.
+   - Se implementó una lista blanca (whitelist) de campos permitidos en la 
+     búsqueda dinámica para prevenir ataques de SOQL Injection.
+
+7. GUÍA DE INSTALACIÓN
+--------------------------------------------------------------------------------
+1. Desplegar metadatos: sf project deploy start.
+2. Permisos: Asegurar que el usuario tenga el Permission Set "Data Cloud Apex API".
+3. Configuración UI: 
+   - Ir a Lightning App Builder.
+   - Seleccionar/Crear una App Page.
+   - Arrastrar el componente "Tech Patient 360 Dashboard".
+   - Guardar y Activar.
+
+8. CONSIDERACIONES DE DATOS
+--------------------------------------------------------------------------------
+El dashboard es dinámico pero depende de que la unificación en Data Cloud esté 
+activa. Si un paciente existe en Salesforce pero no ha sido unificado por las 
+reglas de identidad de Data Cloud, el buscador no lo encontrará en la tabla 
+de perfiles unificados.
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

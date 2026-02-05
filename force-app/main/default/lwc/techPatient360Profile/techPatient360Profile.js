@@ -22,6 +22,16 @@ export default class TechPatient360Profile extends LightningElement {
     @track subscriptions = [];
     @track campaigns = [];
 
+    // Datos del Paciente (Inicialización obligatoria para evitar errores de UI)
+    @track patientData = {
+        firstName: '', lastName: '', age: 0, gender: '', zipCode: '', email: '', phone: '', idPos: '',
+        totalSales: 0, orderCount: 0, avgTicket: 0, daysSinceLastPurchase: 0,
+        lastBranch: 'N/A', lastCategory: 'N/A',
+        retailTotal: 0, retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+        ecommerceTotal: 0, ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+        medicalHistory: [], medicalNotes: '', familyRelations: [], visualDriver: {}, powerQuestions: {}
+    };
+
     // Marketing y Scores
     @track einsteinScore = { propensidadClick: 'N/A', propensidadAbrir: 'N/A' };
     @track rfmRetail = { solares: 'N/A', lentesContacto: 'N/A', oftalmicos: 'N/A', solaresLabel: 'N/A', lentesContactoLabel: 'N/A', oftalmicosLabel: 'N/A' };
@@ -482,6 +492,13 @@ export default class TechPatient360Profile extends LightningElement {
     get isTabEnviosMarketing() {
         return this.activeTab === 'enviosMarketing';
     }
+
+    // Comprobadores de datos para estados vacíos
+    get hasOrders() { return this.orders && this.orders.length > 0; }
+    get hasAppointments() { return this.appointments && this.appointments.length > 0; }
+    get hasQuotes() { return this.quotes && this.quotes.length > 0; }
+    get hasSubscriptions() { return this.subscriptions && this.subscriptions.length > 0; }
+    get hasCampaigns() { return this.campaigns && this.campaigns.length > 0; }
     
     // ==================== TOGGLE HANDLERS - EXPEDIENTE MÉDICO ====================
     

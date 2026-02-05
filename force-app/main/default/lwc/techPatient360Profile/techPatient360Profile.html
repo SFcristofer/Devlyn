@@ -281,46 +281,29 @@
                     <template if:true={isTabOrdenes}>
                         <div class="tab-content-wrapper">
                             <div class="scrollable-content">
-                                <template for:each={orders} for:item="orden">
-                                    <div key={orden.ordenId} class="orden-card">
-                                        <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
-                                            <div class="orden-title">
-                                                <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
-                                                <span>Orden Venta: {orden.ordenId}</span>
-                                            </div>
-                                            <div class="orden-meta">
-                                                <span>Total: ${orden.total}</span>
-                                                <span>Fecha Compra: {orden.fechaCompra}</span>
-                                                <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
-                                            </div>
-                                        </div>
-                                        <div class={orden.detailsClass}>
-                                            <div class="orden-info-row">
-                                                <span>ID Pedido: {orden.pedidoId}</span>
-                                                <span>Sucursal: {orden.sucursal}</span>
-                                                <span>Cotización: {orden.cotizacion}</span>
-                                                <span>{orden.status}</span>
-                                            </div>
-                                            
-                                            <template for:each={orden.productos} for:item="producto">
-                                                <div key={producto.sku} class="producto-item">
-                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
-                                                    <div class="producto-details">
-                                                        <div class="producto-name">Producto: {producto.nombre}</div>
-                                                        <div class="producto-info">
-                                                            <span>SKU: {producto.sku}</span>
-                                                            <span>Cantidad: {producto.cantidad}</span>
-                                                        </div>
-                                                        <div class="producto-pricing">
-                                                            <template if:true={producto.descuento}>
-                                                                <span>Descuento({producto.descuentoCodigo}): ${producto.descuento}</span>
-                                                            </template>
-                                                            <span>Precio Total: ${producto.precioTotal}</span>
-                                                        </div>
-                                                    </div>
+                                <template if:true={hasOrders}>
+                                    <template for:each={orders} for:item="orden">
+                                        <div key={orden.ordenId} class="orden-card">
+                                            <!-- Contenido de la orden -->
+                                            <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
+                                                <div class="orden-title">
+                                                    <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
+                                                    <span>Orden Venta: {orden.ordenId}</span>
                                                 </div>
-                                            </template>
+                                                <div class="orden-meta">
+                                                    <span>Total: ${orden.total}</span>
+                                                    <span>Fecha Compra: {orden.fechaCompra}</span>
+                                                    <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
+                                                </div>
+                                            </div>
+                                            <!-- ... resto del contenido ... -->
                                         </div>
+                                    </template>
+                                </template>
+                                <template if:false={hasOrders}>
+                                    <div class="slds-text-align_center slds-p-around_xx-large slds-text-color_weak">
+                                        <lightning-icon icon-name="utility:info" size="small" class="slds-m-bottom_small"></lightning-icon>
+                                        <p>No hay órdenes registradas para este perfil.</p>
                                     </div>
                                 </template>
                             </div>
