@@ -2,36 +2,166 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getProfileInfo from '@salesforce/apex/TechProfile360Controller.getProfileInfo';
 import getProfileByUnifiedId from '@salesforce/apex/TechProfile360Controller.getProfileByUnifiedId';
 import getCustomerMetrics from '@salesforce/apex/TechProfile360Controller.getCustomerMetrics';
+import getMedicalInfo from '@salesforce/apex/TechProfile360Controller.getMedicalInfo';
+import getOrders from '@salesforce/apex/TechProfile360Controller.getOrders';
+import getAppointments from '@salesforce/apex/TechProfile360Controller.getAppointments';
+import getQuotes from '@salesforce/apex/TechProfile360Controller.getQuotes';
+import getSubscriptions from '@salesforce/apex/TechProfile360Controller.getSubscriptions';
+import getMarketingScores from '@salesforce/apex/TechProfile360Controller.getMarketingScores';
+import getMarketingHistory from '@salesforce/apex/TechProfile360Controller.getMarketingHistory';
 
 export default class TechPatient360Profile extends LightningElement {
     @api recordId;
-    @api isUnifiedId = false; // Nueva bandera para saber si el recordId es ya un UnifiedId
+    @api isUnifiedId = false; 
     unifiedId;
     
-    // Datos del Paciente (ahora dinámicos)
-    @track patientData = {
-        firstName: '',
-        lastName: '',
-        age: 0,
-        gender: '',
-        zipCode: '',
-        email: '',
-        phone: '',
-        idPos: '',
-        totalSales: 0,
-        orderCount: 0,
-        avgTicket: 0,
-        daysSinceLastPurchase: 0,
-        lastBranch: '',
-        lastCategory: '',
-        retailTotal: 0,
-        retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
-        ecommerceTotal: 0,
-        ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
-        medicalHistory: [],
-        medicalNotes: '',
-        familyRelations: []
-    };
+    // Listas de Datos
+    @track orders = [];
+    @track appointments = [];
+    @track quotes = [];
+    @track subscriptions = [];
+    @track campaigns = [];
+
+    // Marketing y Scores
+    @track einsteinScore = { propensidadClick: 'N/A', propensidadAbrir: 'N/A' };
+    @track rfmRetail = { solares: 'N/A', lentesContacto: 'N/A', oftalmicos: 'N/A', solaresLabel: 'N/A', lentesContactoLabel: 'N/A', oftalmicosLabel: 'N/A' };
+    @track rfmEcommerce = { solares: 'N/A', lentesContacto: 'N/A', oftalmicos: 'N/A', solaresLabel: 'N/A', lentesContactoLabel: 'N/A', oftalmicosLabel: 'N/A' };
+
+    @wire(getMarketingHistory, { unifiedId: '$unifiedId' })
+    wiredMarketingHistory({ error, data }) {
+        if (data) {
+            console.log('Marketing History Received:', data);
+            this.campaigns = data.map(camp => ({
+                ...camp,
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                chevronClass: 'toggle-icon',
+                detailsClass: 'campana-details collapsed',
+                envios: camp.envios.map(envio => ({
+                    ...envio,
+                    fechaEnvio: envio.fechaEnvio ? new Date(envio.fechaEnvio).toLocaleDateString() : 'N/A',
+                    isExpanded: false,
+                    chevronIcon: 'utility:chevrondown',
+                    chevronClass: 'toggle-icon',
+                    detailsClass: 'envio-details collapsed'
+                }))
+            }));
+        }
+    }
+
+    @wire(getSubscriptions, { unifiedId: '$unifiedId' })
+    wiredSubscriptions({ error, data }) {
+        if (data) {
+            console.log('Subscriptions Received:', data);
+            this.subscriptions = data.map(sub => ({
+                ...sub,
+                fechaCreacion: sub.fechaCreacion ? new Date(sub.fechaCreacion).toLocaleDateString() : 'N/A',
+                proximaCompra: sub.proximaCompra ? new Date(sub.proximaCompra).toLocaleDateString() : 'N/A',
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                chevronClass: 'toggle-icon',
+                detailsClass: 'suscripcion-details collapsed'
+            }));
+        }
+    }
+
+    @wire(getMarketingScores, { unifiedId: '$unifiedId' })
+    wiredMarketing({ error, data }) {
+        if (data) {
+            console.log('Marketing Scores Received:', data);
+            if (data.einsteinScore) this.einsteinScore = data.einsteinScore;
+            if (data.rfmRetail) this.rfmRetail = { ...this.rfmRetail, ...data.rfmRetail };
+            if (data.rfmEcommerce) this.rfmEcommerce = { ...this.rfmEcommerce, ...data.rfmEcommerce };
+        }
+    }
+
+    @wire(getAppointments, { unifiedId: '$unifiedId' })
+    wiredAppointments({ error, data }) {
+        if (data) {
+            console.log('Appointments Received:', data);
+            this.appointments = data.map(cita => ({
+                ...cita,
+                inicio: cita.inicio ? new Date(cita.inicio).toLocaleString() : 'N/A',
+                fin: cita.fin ? new Date(cita.fin).toLocaleString() : 'N/A'
+            }));
+        } else if (error) {
+            console.error('Error fetching appointments:', error);
+        }
+    }
+
+    @wire(getQuotes, { unifiedId: '$unifiedId' })
+    wiredQuotes({ error, data }) {
+        if (data) {
+            this.quotes = data.map(quote => ({
+                ...quote,
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                chevronClass: 'toggle-icon',
+                productosClass: 'cotizacion-productos collapsed'
+            }));
+        }
+    }
+
+    @wire(getOrders, { unifiedId: '$unifiedId' })
+    wiredOrders({ error, data }) {
+        if (data) {
+            console.log('Real Orders Received:', data);
+            this.orders = data.map(order => ({
+                ...order,
+                fechaCompra: order.fechaCompra ? new Date(order.fechaCompra).toLocaleDateString() : 'N/A',
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                chevronClass: 'toggle-icon',
+                detailsClass: 'orden-details collapsed'
+            }));
+            this.totalItems = this.orders.length;
+        } else if (error) {
+            console.error('Error fetching orders:', error);
+        }
+    }
+
+    @wire(getMedicalInfo, { unifiedId: '$unifiedId' })
+    wiredMedical({ error, data }) {
+        if (data) {
+            console.log('Medical Data Received:', data);
+            this.processMedicalData(data);
+        } else if (error) {
+            console.error('Error fetching medical info:', error);
+        }
+    }
+
+    processMedicalData(data) {
+        // 1. Procesar Antecedentes
+        if (data.antecedents) {
+            const ant = data.antecedents;
+            const history = [];
+            if (ant.ARDOR_IRRITACION__c == '1' || ant.ARDOR_IRRITACION__c == true) history.push('Ardor/Irritación');
+            if (ant.COMEZON__c == '1' || ant.COMEZON__c == true) history.push('Comezón');
+            if (ant.DIABETES__c == '1' || ant.DIABETES__c == true) history.push('Diabetes');
+            if (ant.HIPERTENSION__c == '1' || ant.HIPERTENSION__c == true) history.push('Hipertensión');
+            if (ant.VISION_BORROSA__c == '1' || ant.VISION_BORROSA__c == true) history.push('Visión Borrosa');
+            
+            this.patientData.medicalHistory = history;
+            this.patientData.medicalNotes = ant.NOTAS__c || 'Sin notas adicionales';
+        }
+
+        // 2. Procesar Diagnóstico
+        if (data.lastDiagnosis) {
+            const diag = data.lastDiagnosis;
+            const diagList = [];
+            if (diag.ASTIGMATISMO__c == '1') diagList.push('Astigmatismo');
+            if (diag.MIOPIA__c == '1') diagList.push('Miopía');
+            if (diag.HIPERMETROPIA__c == '1') diagList.push('Hipermetropía');
+            if (diag.PRESBICIA__c == '1') diagList.push('Presbicia');
+            
+            this.diagnoses = diagList.length > 0 ? diagList : ['No presenta error'];
+            this.lastDiagnosisDate = diag.FECHA__c ? new Date(diag.FECHA__c).toLocaleDateString() : 'N/A';
+        }
+
+        // 3. Driver Visual y Preguntas Poder
+        this.patientData.visualDriver = data.visualDriver || {};
+        this.patientData.powerQuestions = data.powerQuestions || {};
+    }
 
     // Caso 1: Viene de un registro de Salesforce (Account/Contact)
     @wire(getProfileInfo, { recordId: '$recordId' })
@@ -102,242 +232,36 @@ export default class TechPatient360Profile extends LightningElement {
     // Control de Tabs
     @track activeTab = 'expediente';
     
-    // Diagnósticos
-    lastDiagnosisDate = '26 Marzo 2025';
-    diagnoses = [
-        'Astigmatismo',
-        'Experiencia LC',
-        'Hipermetropía',
-        'Miopía',
-        'No presenta error',
-        'Presbicia'
-    ];
-    
-    // Último Examen
-    lastExamDate = '26 Marzo 2025';
-    
-    // Órdenes
-    @track orders = [
-        {
-            ordenId: 'AKAV095695',
-            total: 6228.62,
-            fechaCompra: '20 Julio 2025',
-            pedidoId: '26416668',
-            sucursal: 'MEGA COYOACAN(A844)',
-            cotizacion: '754466',
-            status: 'Entregado',
-            isExpanded: false,
-            productos: [
-                {
-                    nombre: 'VISION SENCILLA BLANCO BLUE LIGHT',
-                    sku: '4300SVNDBLU1',
-                    cantidad: 1,
-                    descuento: 472.35,
-                    descuentoCodigo: '8010',
-                    precioTotal: 1994.65
-                },
-                {
-                    nombre: 'VISION SENCILLA BLANCO BLUE LIGHT',
-                    sku: '4300SVNDBLU1',
-                    cantidad: 1,
-                    descuento: 472.35,
-                    descuentoCodigo: '8010',
-                    precioTotal: 1994.65
-                },
-                {
-                    nombre: 'TOMMY HILFIGER TH 1785',
-                    sku: '0670117851GZ58',
-                    cantidad: 1,
-                    precioTotal: 2239.30
-                }
-            ]
-        },
-        {
-            ordenId: 'BAJV041155',
-            total: 3000.00,
-            fechaCompra: '20 Febrero 2025',
-            status: 'Completado',
-            isExpanded: false,
-            productos: []
-        },
-        {
-            ordenId: 'AOMV081324',
-            total: 3000.00,
-            fechaCompra: '20 Febrero 2025',
-            status: 'Completado',
-            isExpanded: false,
-            productos: []
-        }
-    ];
-    
-    // Citas
-    appointments = [
-        {
-            citaId: '509490',
-            tipo: 'Examen de la vista',
-            status: 'Completada',
-            sucursal: 'MEGA COYOACAN(A844)',
-            inicio: '29 Agosto 2025, 06:00 pm',
-            fin: '29 Agosto 2025, 06:45 pm',
-            creada: '28 Agosto 11:53 pm'
-        }
-    ];
-    
-    // Cotizaciones
-    @track quotes = [
-        {
-            presupuestoId: '754466',
-            fecha: '23 Noviembre 2022',
-            fechaExpiracion: '30 Noviembre 2022',
-            total: 4501.90,
-            isExpanded: false,
-            productos: [
-                {
-                    nombre: 'VISION SENCILLA BLANCO BLUE LIGHT',
-                    sku: '4300SVNDBLU1',
-                    cantidad: 2,
-                    precioTotal: 1698.00
-                },
-                {
-                    nombre: 'ANTIRREFLEJANTE HD',
-                    sku: 'SHC',
-                    cantidad: 2,
-                    precioTotal: 1600.00
-                },
-                {
-                    nombre: 'ESTUCHE NUEVA IMAGEN C/PAÑO/SP',
-                    sku: '600302700600',
-                    cantidad: 1,
-                    precioTotal: 159.00
-                },
-                {
-                    nombre: 'PROTECCION PLUS',
-                    sku: '600500800203',
-                    cantidad: 1,
-                    precioTotal: 244.90
-                },
-                {
-                    nombre: 'XIK? CASUAL B XK2005',
-                    sku: '0315320052Z249',
-                    cantidad: 1,
-                    precioTotal: 800.00
-                }
-            ]
-        }
-    ];
-    
     // Suscripciones
-    @track subscriptions = [
-        {
-            nombre: '1 - MONTHLY',
-            status: 'Active',
-            fechaCreacion: '15 Julio 2025',
-            frecuencia: 'Cada mes',
-            ciclosCompletados: 5,
-            ultimaCompra: '15 Diciembre 2025',
-            proximaCompra: '15 Enero 2026',
-            isExpanded: false,
-            productos: [
-                {
-                    sku: '24711',
-                    cantidad: 2,
-                    adjuntos: [
-                        {
-                            numero: 1,
-                            nombre: 'Precision 1 Ast diferente graduacion',
-                            cilindro: -0.75,
-                            eje: 180,
-                            poder: -3.00
-                        },
-                        {
-                            numero: 2,
-                            nombre: 'Precision 1 Ast misma graduacion',
-                            cilindro: -1.25,
-                            eje: 180,
-                            poder: -3.00
-                        }
-                    ]
-                }
-            ]
-        }
-    ];
+    @track subscriptions = [];
     
     // Einstein Scores
     einsteinScore = {
-        propensidadClick: 'Poco Probable',
-        propensidadAbrir: 'Muy Probable'
+        propensidadClick: 'N/A',
+        propensidadAbrir: 'N/A'
     };
     
     // RFM Scores
     rfmRetail = {
-        solares: '322',
-        lentesContacto: 'NA',
-        oftalmicos: '122',
-        solaresLabel: 'Potencial',
-        lentesContactoLabel: 'No Aplica',
-        oftalmicosLabel: 'Rezagado'
+        solares: 'N/A',
+        lentesContacto: 'N/A',
+        oftalmicos: 'N/A',
+        solaresLabel: 'N/A',
+        lentesContactoLabel: 'N/A',
+        oftalmicosLabel: 'N/A'
     };
     
     rfmEcommerce = {
-        solares: 'NA',
-        lentesContacto: '234',
-        oftalmicos: 'NA',
-        solaresLabel: 'No Aplica',
-        lentesContactoLabel: 'Ocasión',
-        oftalmicosLabel: 'No Aplica'
+        solares: 'N/A',
+        lentesContacto: 'N/A',
+        oftalmicos: 'N/A',
+        solaresLabel: 'N/A',
+        lentesContactoLabel: 'N/A',
+        oftalmicosLabel: 'N/A'
     };
     
     // Campañas de Marketing
-    @track campaigns = [
-        {
-            nombre: 'Ventas Buen Fin 2025',
-            journey: 'Buen Fin 2025 SOL Nivel 1 2 3 4',
-            isExpanded: false,
-            envios: [
-                {
-                    uniqueKey: 'envio-email-1',
-                    tipo: 'Email',
-                    icono: 'utility:email',
-                    asunto: '🛍️Comenzó el Buen Fin con hasta 70% OFF en Amazones...',
-                    fechaEnvio: '14 Noviembre 2025',
-                    desde: 'Ópticas Devlyn (promo@news.devlyn.com.mx)',
-                    asuntoCompleto: '🛍️Comenzó el Buen Fin con hasta 70% OFF en Amazones + 40% Graduación + hasta 18MSI! ❤️‍🔥',
-                    isExpanded: false,
-                    eventos: [
-                        {
-                            tipo: 'Enviado',
-                            fechaHora: '14/11/2025, 06:00 a.m.'
-                        },
-                        {
-                            tipo: 'Abierto',
-                            fechaHora: '14/11/2025, 06:21 a.m.'
-                        },
-                        {
-                            tipo: 'Click',
-                            fechaHora: '14/11/2025, 06:21 a.m.'
-                        },
-                        {
-                            tipo: 'Opt Out',
-                            fechaHora: '14/11/2025, 06:22 a.m.'
-                        },
-                        {
-                            tipo: 'Complaint',
-                            fechaHora: '14/11/2025, 06:22 a.m.'
-                        }
-                    ]
-                },
-                {
-                    uniqueKey: 'envio-whatsapp-1',
-                    tipo: 'WhatsApp',
-                    icono: 'utility:world',
-                    asunto: '🛍️Ya empezó el Buen Fin con hasta 70% OFF en Lentes...',
-                    fechaEnvio: '14 Noviembre 2025',
-                    isExpanded: false,
-                    eventos: []
-                }
-            ]
-        }
-    ];
+    @track campaigns = [];
     
     // ==================== LIFECYCLE HOOKS ====================
     
