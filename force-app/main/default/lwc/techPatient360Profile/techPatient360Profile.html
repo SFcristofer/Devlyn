@@ -1,0 +1,578 @@
+<template>
+    <div class="main-container">
+        <lightning-layout multiple-rows="true" class="slds-gutters_none">
+            
+            <!-- ========== PANEL LATERAL IZQUIERDO (25%) ========== -->
+            <lightning-layout-item size="12" medium-device-size="3" large-device-size="3" class="sidebar-column">
+                <div class="sidebar-container">
+                    
+                    <!-- Perfil del Paciente -->
+                    <div class="profile-section">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-avatar variant="circle" fallback-icon-name="standard:avatar" size="large"></lightning-avatar>
+                            </div>
+                            <div class="slds-media__body">
+                                <h2 class="profile-name">{patientData.firstName} {patientData.lastName}</h2>
+                                <div class="profile-meta">{patientData.age} años, {patientData.gender}</div>
+                                <div class="profile-meta">C.P: {patientData.zipCode}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-divider"></div>
+                        
+                        <!-- Información de Contacto -->
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <lightning-icon icon-name="utility:email" size="xx-small"></lightning-icon>
+                                <span class="contact-text">{patientData.email}</span>
+                            </div>
+                            <div class="contact-item">
+                                <lightning-icon icon-name="utility:phone_portrait" size="xx-small"></lightning-icon>
+                                <span class="contact-text">{patientData.phone}</span>
+                            </div>
+                            <div class="contact-item">
+                                <lightning-icon icon-name="utility:identity" size="xx-small"></lightning-icon>
+                                <span class="contact-text">ID Cliente POS: {patientData.idPos}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-divider"></div>
+                    
+                    <!-- Resumen del Cliente -->
+                    <div class="summary-section">
+                        <h3 class="section-title">Resumen del Cliente</h3>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
+                                <span>Monto Total Comprado</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">
+                                <lightning-formatted-number value={patientData.totalSales} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:target" size="xx-small"></lightning-icon>
+                                <span>Total de Ventas</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">{patientData.orderCount}</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:chart" size="xx-small"></lightning-icon>
+                                <span>Ticket promedio</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">
+                                <lightning-formatted-number value={patientData.avgTicket} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:date_time" size="xx-small"></lightning-icon>
+                                <span>Última compra</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">{patientData.daysSinceLastPurchase} días atrás</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:home" size="xx-small"></lightning-icon>
+                                <span>Última Sucursal</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">{patientData.lastBranch}</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-left">
+                                <lightning-icon icon-name="utility:apps" size="xx-small"></lightning-icon>
+                                <span>Última Categoría</span>
+                            </div>
+                            <div class="metric-separator">|</div>
+                            <div class="metric-value">{patientData.lastCategory}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-divider"></div>
+                    
+                    <!-- Resumen de Compras -->
+                    <div class="summary-section">
+                        <h3 class="section-title">Resumen de compras</h3>
+                        
+                        <div class="channel-block">
+                            <div class="channel-header">RETAIL</div>
+                            <div class="channel-badges">
+                                <span class="category-badge">SOL: {patientData.retailCategories.Solares}</span>
+                                <span class="category-badge">LC: {patientData.retailCategories.LentesContacto}</span>
+                                <span class="category-badge">OFT: {patientData.retailCategories.Oftalmicos}</span>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-left">
+                                    <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
+                                    <span>Total de Ventas</span>
+                                </div>
+                                <div class="metric-separator">|</div>
+                                <div class="metric-value">
+                                    <lightning-formatted-number value={patientData.retailTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="channel-block">
+                            <div class="channel-header">ECOMMERCE</div>
+                            <div class="channel-badges">
+                                <span class="category-badge">SOL: {patientData.ecommerceCategories.Solares}</span>
+                                <span class="category-badge">LC: {patientData.ecommerceCategories.LentesContacto}</span>
+                                <span class="category-badge">OFT: {patientData.ecommerceCategories.Oftalmicos}</span>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-left">
+                                    <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
+                                    <span>Total de Ventas</span>
+                                </div>
+                                <div class="metric-separator">|</div>
+                                <div class="metric-value">
+                                    <lightning-formatted-number value={patientData.ecommerceTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </lightning-layout-item>
+            
+            <!-- ========== PANEL PRINCIPAL DERECHO (75%) ========== -->
+            <lightning-layout-item size="12" medium-device-size="9" large-device-size="9" class="main-column">
+                <div class="main-content-container">
+                    
+                    <!-- Pestañas de Navegación -->
+                    <div class="custom-tabs">
+                        <button class={tabExpedienteClass} onclick={handleTabExpediente}>Expediente Médico</button>
+                        <button class={tabOrdenesClass} onclick={handleTabOrdenes}>Ordenes</button>
+                        <button class={tabCitasClass} onclick={handleTabCitas}>Citas</button>
+                        <button class={tabCotizacionesClass} onclick={handleTabCotizaciones}>Cotizaciones</button>
+                        <button class={tabSuscripcionesClass} onclick={handleTabSuscripciones}>Suscripciones</button>
+                        <button class={tabEnviosMarketingClass} onclick={handleTabEnviosMarketing}>Envíos Marketing</button>
+                    </div>
+                    
+                    <!-- ========== TAB 1: EXPEDIENTE MÉDICO ========== -->
+                    <template if:true={isTabExpediente}>
+                        <div class="tab-content-wrapper">
+                            
+                            <!-- Último Diagnóstico -->
+                            <div class="info-capsule">
+                                <div class="capsule-header">
+                                    <lightning-icon icon-name="utility:description" size="small"></lightning-icon>
+                                    <span>Último diagnóstico: {lastDiagnosisDate}</span>
+                                </div>
+                                <div class="capsule-content expanded">
+                                    <div class="diagnosis-badges">
+                                        <template for:each={diagnoses} for:item="diagnosis">
+                                            <span key={diagnosis} class="diagnosis-badge">{diagnosis}</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Último Examen de la Vista -->
+                            <div class="info-capsule">
+                                <div class="capsule-header">
+                                    <lightning-icon icon-name="utility:preview" size="small"></lightning-icon>
+                                    <span>Último Examen de la Vista: {lastExamDate}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Antecedentes Médicos (Expandible) -->
+                            <div class="info-capsule expandable">
+                                <div class="capsule-header clickable" onclick={toggleAntecedentes}>
+                                    <lightning-icon icon-name="utility:task" size="small"></lightning-icon>
+                                    <span>Antecedentes Médicos</span>
+                                    <lightning-icon icon-name={antecedenteIcon} size="x-small" class={antecedenteIconClass}></lightning-icon>
+                                </div>
+                                <div class={antecedenteContentClass}>
+                                    <div class="antecedentes-grid">
+                                        <template for:each={patientData.medicalHistory} for:item="condition">
+                                            <div key={condition} class="antecedente-item">
+                                                <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon"></lightning-icon>
+                                                <span>{condition}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="notas-section">
+                                        <strong>Notas:</strong> {patientData.medicalNotes}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Driver Visual (Expandible) -->
+                            <div class="info-capsule expandable">
+                                <div class="capsule-header clickable" onclick={toggleDriverVisual}>
+                                    <lightning-icon icon-name="utility:preview" size="small"></lightning-icon>
+                                    <span>Driver Visual</span>
+                                    <lightning-icon icon-name={driverVisualIcon} size="x-small" class={driverVisualIconClass}></lightning-icon>
+                                </div>
+                                <div class={driverVisualContentClass}>
+                                    <p>Contenido del Driver Visual...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Preguntas poder (Expandible) -->
+                            <div class="info-capsule expandable">
+                                <div class="capsule-header clickable" onclick={togglePreguntasPoder}>
+                                    <lightning-icon icon-name="utility:question" size="small"></lightning-icon>
+                                    <span>Preguntas poder</span>
+                                    <lightning-icon icon-name={preguntasPoderIcon} size="x-small" class={preguntasPoderIconClass}></lightning-icon>
+                                </div>
+                                <div class={preguntasPoderContentClass}>
+                                    <p>Contenido de Preguntas poder...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Graduaciones de pedidos (Expandible) -->
+                            <div class="info-capsule expandable">
+                                <div class="capsule-header clickable" onclick={toggleGraduaciones}>
+                                    <lightning-icon icon-name="utility:metrics" size="small"></lightning-icon>
+                                    <span>Graduaciones de pedidos</span>
+                                    <lightning-icon icon-name={graduacionesIcon} size="x-small" class={graduacionesIconClass}></lightning-icon>
+                                </div>
+                                <div class={graduacionesContentClass}>
+                                    <p>Contenido de Graduaciones...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Familia (Perfiles relacionados) (Expandible) -->
+                            <div class="info-capsule expandable">
+                                <div class="capsule-header clickable" onclick={toggleFamilia}>
+                                    <lightning-icon icon-name="utility:group" size="small"></lightning-icon>
+                                    <span>Familia (Perfiles relacionados)</span>
+                                    <lightning-icon icon-name={familiaIcon} size="x-small" class={familiaIconClass}></lightning-icon>
+                                </div>
+                                <div class={familiaContentClass}>
+                                    <template for:each={patientData.familyRelations} for:item="member">
+                                        <div key={member.idPos} class="family-member">
+                                            <div class="family-info">
+                                                <lightning-icon icon-name="standard:avatar" size="small"></lightning-icon>
+                                                <div class="family-details">
+                                                    <span class="family-name">Nombre: {member.name}</span>
+                                                    <span class="family-id">ID POS: {member.idPos}</span>
+                                                </div>
+                                            </div>
+                                            <lightning-button label="Ver Perfil" variant="brand" class="profile-btn"></lightning-button>
+                                            <template if:false={member.isLast}>
+                                                <div class="family-divider"></div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- ========== TAB 2: ORDENES ========== -->
+                    <template if:true={isTabOrdenes}>
+                        <div class="tab-content-wrapper">
+                            <div class="scrollable-content">
+                                <template for:each={orders} for:item="orden">
+                                    <div key={orden.ordenId} class="orden-card">
+                                        <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
+                                            <div class="orden-title">
+                                                <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
+                                                <span>Orden Venta: {orden.ordenId}</span>
+                                            </div>
+                                            <div class="orden-meta">
+                                                <span>Total: ${orden.total}</span>
+                                                <span>Fecha Compra: {orden.fechaCompra}</span>
+                                                <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
+                                            </div>
+                                        </div>
+                                        <div class={orden.detailsClass}>
+                                            <div class="orden-info-row">
+                                                <span>ID Pedido: {orden.pedidoId}</span>
+                                                <span>Sucursal: {orden.sucursal}</span>
+                                                <span>Cotización: {orden.cotizacion}</span>
+                                                <span>{orden.status}</span>
+                                            </div>
+                                            
+                                            <template for:each={orden.productos} for:item="producto">
+                                                <div key={producto.sku} class="producto-item">
+                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
+                                                    <div class="producto-details">
+                                                        <div class="producto-name">Producto: {producto.nombre}</div>
+                                                        <div class="producto-info">
+                                                            <span>SKU: {producto.sku}</span>
+                                                            <span>Cantidad: {producto.cantidad}</span>
+                                                        </div>
+                                                        <div class="producto-pricing">
+                                                            <template if:true={producto.descuento}>
+                                                                <span>Descuento({producto.descuentoCodigo}): ${producto.descuento}</span>
+                                                            </template>
+                                                            <span>Precio Total: ${producto.precioTotal}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- ========== TAB 3: CITAS ========== -->
+                    <template if:true={isTabCitas}>
+                        <div class="tab-content-wrapper">
+                            <template for:each={appointments} for:item="cita">
+                                <div key={cita.citaId} class="cita-card">
+                                    <div class="cita-header">
+                                        <div class="cita-info">
+                                            <lightning-icon icon-name="utility:event" size="small"></lightning-icon>
+                                            <div>
+                                                <span class="cita-number">Cita: {cita.citaId}</span>
+                                                <span class="cita-type">Tipo: {cita.tipo}</span>
+                                                <span class="cita-status">Estatus: {cita.status}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="cita-details">
+                                        <div class="cita-row">
+                                            <span>Sucursal: {cita.sucursal}</span>
+                                            <span>Inicio: {cita.inicio}</span>
+                                            <span>Fin: {cita.fin}</span>
+                                        </div>
+                                        <div class="cita-created">
+                                            Creada: {cita.creada}
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    
+                    <!-- ========== TAB 4: COTIZACIONES ========== -->
+                    <template if:true={isTabCotizaciones}>
+                        <div class="tab-content-wrapper">
+                            <div class="scrollable-content">
+                                <template for:each={quotes} for:item="quote">
+                                    <div key={quote.presupuestoId} class="cotizacion-card">
+                                        <div class="cotizacion-header" data-id={quote.presupuestoId} onclick={toggleCotizacion}>
+                                            <lightning-icon icon-name="utility:quote" size="small"></lightning-icon>
+                                            <span>Presupuesto: {quote.presupuestoId}</span>
+                                            <span>Fecha: {quote.fecha}</span>
+                                            <span>Fecha Expiración: {quote.fechaExpiracion}</span>
+                                            <span>Total: ${quote.total}</span>
+                                            <lightning-icon icon-name={quote.chevronIcon} size="x-small" class={quote.chevronClass}></lightning-icon>
+                                        </div>
+                                        
+                                        <div class={quote.productosClass}>
+                                            <template for:each={quote.productos} for:item="producto">
+                                                <div key={producto.sku} class="producto-item">
+                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
+                                                    <div class="producto-details">
+                                                        <div class="producto-name">Producto: {producto.nombre}</div>
+                                                        <div class="producto-info">
+                                                            <span>SKU: {producto.sku}</span>
+                                                            <span>Cantidad: {producto.cantidad}</span>
+                                                        </div>
+                                                        <div class="producto-pricing">
+                                                            <span>Precio Total: ${producto.precioTotal}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- ========== TAB 5: SUSCRIPCIONES ========== -->
+                    <template if:true={isTabSuscripciones}>
+                        <div class="tab-content-wrapper">
+                            <template for:each={subscriptions} for:item="sub">
+                                <div key={sub.nombre} class="suscripcion-card">
+                                    <div class="suscripcion-header" data-id={sub.nombre} onclick={toggleSuscripcion}>
+                                        <lightning-icon icon-name="utility:recurring_exception" size="small"></lightning-icon>
+                                        <span>{sub.nombre}</span>
+                                        <span>Estatus: {sub.status}</span>
+                                        <span>Fecha Creación: {sub.fechaCreacion}</span>
+                                        <lightning-icon icon-name={sub.chevronIcon} size="x-small" class={sub.chevronClass}></lightning-icon>
+                                    </div>
+                                    
+                                    <div class={sub.detailsClass}>
+                                        <div class="suscripcion-info">
+                                            <span>Frecuencia: {sub.frecuencia}</span>
+                                            <span>Ciclos completados: {sub.ciclosCompletados}</span>
+                                        </div>
+                                        <div class="suscripcion-info">
+                                            <span>Última compra: {sub.ultimaCompra}</span>
+                                            <span>Próxima compra: {sub.proximaCompra}</span>
+                                        </div>
+                                        
+                                        <template for:each={sub.productos} for:item="producto">
+                                            <div key={producto.sku} class="suscripcion-productos">
+                                                <div class="suscripcion-producto-header">
+                                                    <span>SKU: {producto.sku}</span>
+                                                    <span>Cantidad: {producto.cantidad}</span>
+                                                </div>
+                                                
+                                                <div class="adjunto-section">
+                                                    <div class="adjunto-title">Adjuntos:</div>
+                                                    
+                                                    <template for:each={producto.adjuntos} for:item="adjunto">
+                                                        <div key={adjunto.numero} class="adjunto-item">
+                                                            <span class="adjunto-number">{adjunto.numero}. Nombre: {adjunto.nombre}</span>
+                                                            <div class="adjunto-details">
+                                                                <span>Cilindro: {adjunto.cilindro}</span>
+                                                                <span>Eje (Axis): {adjunto.eje}°</span>
+                                                                <span>Poder: {adjunto.poder}</span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    
+                    <!-- ========== TAB 6: ENVÍOS MARKETING ========== -->
+                    <template if:true={isTabEnviosMarketing}>
+                        <div class="tab-content-wrapper">
+                            <div class="scrollable-content">
+                                
+                                <!-- Einstein Email Score -->
+                                <div class="marketing-scores">
+                                    <div class="score-section">
+                                        <div class="score-title">EINSTEIN EMAIL SCORE</div>
+                                        <div class="score-items">
+                                            <div class="score-item">
+                                                <lightning-icon icon-name="utility:click" size="small"></lightning-icon>
+                                                <div>
+                                                    <div>Propiensidad Click</div>
+                                                    <div class="score-value">{einsteinScore.propensidadClick}</div>
+                                                </div>
+                                            </div>
+                                            <div class="score-item">
+                                                <lightning-icon icon-name="utility:open" size="small"></lightning-icon>
+                                                <div>
+                                                    <div>Propiensidad Abrir</div>
+                                                    <div class="score-value">{einsteinScore.propensidadAbrir}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- RFM Scores -->
+                                    <div class="rfm-section">
+                                        <div class="rfm-channel">
+                                            <div class="rfm-title">RFM RETAIL</div>
+                                            <div class="rfm-badges">
+                                                <span class="rfm-badge">SOL: {rfmRetail.solares}</span>
+                                                <span class="rfm-badge">LC: {rfmRetail.lentesContacto}</span>
+                                                <span class="rfm-badge">OFT: {rfmRetail.oftalmicos}</span>
+                                            </div>
+                                            <div class="rfm-labels">
+                                                <span>{rfmRetail.solaresLabel}</span>
+                                                <span>{rfmRetail.lentesContactoLabel}</span>
+                                                <span>{rfmRetail.oftalmicosLabel}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="rfm-channel">
+                                            <div class="rfm-title">RFM ECOMMERCE</div>
+                                            <div class="rfm-badges">
+                                                <span class="rfm-badge">SOL: {rfmEcommerce.solares}</span>
+                                                <span class="rfm-badge">LC: {rfmEcommerce.lentesContacto}</span>
+                                                <span class="rfm-badge">OFT: {rfmEcommerce.oftalmicos}</span>
+                                            </div>
+                                            <div class="rfm-labels">
+                                                <span>{rfmEcommerce.solaresLabel}</span>
+                                                <span>{rfmEcommerce.lentesContactoLabel}</span>
+                                                <span>{rfmEcommerce.oftalmicosLabel}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Campaña -->
+                                <template for:each={campaigns} for:item="campana" for:index="campanaIdx">
+                                    <div key={campana.nombre} class="campana-card">
+                                        <div class="campana-header" data-id={campana.nombre} onclick={toggleCampana}>
+                                            <lightning-icon icon-name="utility:campaign" size="small"></lightning-icon>
+                                            <span>Campaña: {campana.nombre}</span>
+                                            <lightning-icon icon-name={campana.chevronIcon} size="x-small" class={campana.chevronClass}></lightning-icon>
+                                        </div>
+                                        
+                                        <div class={campana.detailsClass}>
+                                            <div class="journey-info">
+                                                <strong>Journey:</strong> {campana.journey}
+                                            </div>
+                                            
+                                            <template for:each={campana.envios} for:item="envio" for:index="envioIdx">
+                                                <div key={envio.uniqueKey} class="envio-item">
+                                                    <div class="envio-header" data-index={envioIdx} data-campana={campanaIdx} onclick={toggleEnvio}>
+                                                        <lightning-icon icon-name={envio.icono} size="small"></lightning-icon>
+                                                        <span>{envio.tipo}: {envio.asunto}</span>
+                                                        <span>Fecha Envío: {envio.fechaEnvio}</span>
+                                                        <lightning-icon icon-name={envio.chevronIcon} size="x-small" class={envio.chevronClass}></lightning-icon>
+                                                    </div>
+                                                    
+                                                    <div class={envio.detailsClass}>
+                                                        <div class="envio-info">
+                                                            <span>Desde: {envio.desde}</span>
+                                                        </div>
+                                                        <div class="envio-info">
+                                                            <span>Asunto: {envio.asuntoCompleto}</span>
+                                                        </div>
+                                                        
+                                                        <div class="eventos-section">
+                                                            <div class="eventos-title">Eventos:</div>
+                                                            <template for:each={envio.eventos} for:item="evento">
+                                                                <div key={evento.tipo} class="evento-item">
+                                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
+                                                                    <span>{evento.tipo} ({evento.fechaHora})</span>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Paginación Dinámica -->
+                    <template if:true={showPagination}>
+                        <div class="pagination-container">
+                            <button class="pagination-btn" onclick={handlePreviousPage} disabled={isFirstPage}>‹ Anterior</button>
+                            <template for:each={paginationPages} for:item="page">
+                                <button key={page.number} 
+                                        class={page.className} 
+                                        data-page={page.number} 
+                                        onclick={handlePageChange}>
+                                    {page.number}
+                                </button>
+                            </template>
+                            <button class="pagination-btn" onclick={handleNextPage} disabled={isLastPage}>Siguiente ›</button>
+                        </div>
+                    </template>
+                </div>
+            </lightning-layout-item>
+        </lightning-layout>
+    </div>
+</template>

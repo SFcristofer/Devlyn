@@ -1,0 +1,149 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Preguntas Poder" icon-name="standard:question_feed">       
+            <lightning-button variant="brand" 
+                    label={showPP} 
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>
+                <div class="spinner">
+                    <template if:true={isLoading}>
+                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                         </lightning-spinner>
+                    </template>
+                </div>  
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(60, 91, 148); padding:20px; background-color: rgb(255, 255, 255); width:15%;"> 
+                        </thead>
+                        <tbody style="border: 2px solid rgba(60, 91, 148); padding:10px; border-radius: 50px 20px; background-color: rgb(255, 255, 255);">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.FECHA__c}>
+                                        <th style="width: 500px;"><b>Fecha</b></th>
+                                        <td>{item.FECHA__c}</td>
+                                    </tr>
+                                    <tr key={item.ACTIVIDAD_AIRE_LIBRE__c}>
+                                        <th><b>Actividad Aire Libre</b></th>
+                                        <td>{item.ACTIVIDAD_AIRE_LIBRE__c}</td>
+                                    </tr>
+                                    <tr key={item.ATRIBUTOS_DESEMPENO__c}>
+                                        <th><b>Atributos Desempeño</b></th>
+                                        <td lwc:if={item.ATRIBUTOS_DESEMPENO__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.ATRIBUTOS_ESTETICA__c}>
+                                        <th><b>Atributos Estética</b></th>
+                                        <td lwc:if={item.ATRIBUTOS_ESTETICA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.ATRIBUTOS_NINGUNA__c}>
+                                        <th><b>Atributos Ninguna</b></th>
+                                        <td lwc:if={item.ATRIBUTOS_NINGUNA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.ATRIBUTOS_NOTAS__c}>
+                                        <th><b>Atributos Notas</b></th>
+                                        <td>{item.ATRIBUTOS_NOTAS__c}</td>
+                                    </tr>
+                                    <tr key={item.ATRIBUTOS_PROTECCION__c}>
+                                        <th><b>Atributos Protección</b></th>
+                                        <td lwc:if={item.ATRIBUTOS_PROTECCION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.CIRCUNSTANCIA_CERCANA__c}>
+                                        <th><b>Circunstancia Cercana</b></th>
+                                        <td lwc:if={item.CIRCUNSTANCIA_CERCANA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.CIRCUNSTANCIA_INTERMEDIA__c}>
+                                        <th><b>Circunstancia Intermedia</b></th>
+                                        <td lwc:if={item.CIRCUNSTANCIA_INTERMEDIA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.CIRCUNSTANCIA_LEJANA__c}>
+                                        <th><b>Circunstancia Lejana</b></th>
+                                        <td lwc:if={item.CIRCUNSTANCIA_LEJANA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.CIRCUNSTANCIA_NOTAS__c}>
+                                        <th><b>Circunstancia Notas</b></th>
+                                        <td>{item.CIRCUNSTANCIA_NOTAS__c}</td>
+                                    </tr>
+                                    <tr key={item.COLOR_VESTUARIO__c}>
+                                        <th><b>Color Vestuario</b></th>
+                                        <td>{item.COLOR_VESTUARIO__c}</td>
+                                    </tr>
+                                    <tr key={item.ESTORBAN_LENTES__c}>
+                                        <th><b>Estorban Lentes</b></th>
+                                        <td>{item.ESTORBAN_LENTES__c}</td>
+                                    </tr>
+                                    <tr key={item.IMPORTANCIA_ESTILO_LENTES__c}>
+                                        <th><b>Importancia Estilo Lentes</b></th>
+                                        <td>{item.IMPORTANCIA_ESTILO_LENTES__c}</td>
+                                    </tr>
+                                    <tr key={item.LENTES_EMERGENCIA__c}>
+                                        <th><b>Lentes Emergencia</b></th>
+                                        <td>{item.LENTES_EMERGENCIA__c}</td>
+                                    </tr>
+                                    <tr key={item.MOLESTIAS_PROVENIENTES_SOL__c}>
+                                        <th><b>Molestias Provenientes Sol</b></th>
+                                        <td>{item.MOLESTIAS_PROVENIENTES_SOL__c}</td>
+                                    </tr>
+                                    <tr key={item.MOLESTIAS_REFLEJO_MANEJAR__c}>
+                                        <th><b>Molestias Reflejo Manejar</b></th>
+                                        <td>{item.MOLESTIAS_REFLEJO_MANEJAR__c}</td>
+                                    </tr>
+                                    <tr key={item.NECESIDAD_CORRECION__c}>
+                                        <th><b>Necesidad Correción</b></th>
+                                        <td lwc:if={item.NECESIDAD_CORRECION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.NECESIDAD_NINGUNA__c}>
+                                        <th><b>Necesidad Ninguna</b></th>
+                                        <td lwc:if={item.NECESIDAD_NINGUNA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.NECESIDAD_NOTAS__c}>
+                                        <th><b>Necesidad Notas</b></th>
+                                        <td>{item.NECESIDAD_NOTAS__c}</td>
+                                    </tr>
+                                    <tr key={item.NECESIDAD_OPTIMIZACION__c}>
+                                        <th><b>Necesidad Optimización</b></th>
+                                        <td lwc:if={item.NECESIDAD_OPTIMIZACION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.NECESIDAD_PROTECCION__c}>
+                                        <th><b>Necesidad Protección</b></th>
+                                        <td lwc:if={item.NECESIDAD_PROTECCION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.PROTEGE_SUS_OJOS__c}>
+                                        <th><b>Protege Sus Ojos</b></th>
+                                        <td>{item.PROTEGE_SUS_OJOS__c}</td>
+                                    </tr>
+                                    <tr key={item.TIEMPO_CLARAMENTE_LENTES__c}>
+                                        <th><b>Tiempo Claramente Lentes</b></th>
+                                        <td>{item.TIEMPO_CLARAMENTE_LENTES__c}</td>
+                                    </tr>
+                                    <tr key={item.TRANSPARENCIA_LENTES__c}>
+                                        <th><b>Transparencia Lentes</b></th>
+                                        <td>{item.TRANSPARENCIA_LENTES__c}</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>

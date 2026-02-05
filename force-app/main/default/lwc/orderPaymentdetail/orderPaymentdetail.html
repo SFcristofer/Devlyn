@@ -1,0 +1,68 @@
+<template>
+    <div class="slds-m-top_medium">
+    <lightning-layout-item>
+        <lightning-card title="Pagos" icon-name="custom:custom17"></lightning-card>
+    </lightning-layout-item>
+    <lightning-layout-item>
+        <template lwc:if={prodPayment}>
+            <div class="slds-scrollable slds-m-around_medium">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+              <thead style="border-top: 4px solid rgb(60, 91, 148); padding:10px;">
+                  <tr>
+                      <th><b>Cuenta Por Cobrar</b></th>
+                      <th><b>Id Pago</b></th>
+                      <th><b>Id Tipo de Pago</b></th>
+                      <th><b>Cantidad Pagada</b></th>
+                      <th><b>Metodo de Pago</b></th>
+                      <th><b>Fecha</b></th>
+                      <th><b>Doc 1</b></th>
+                      <th><b>Doc 2</b></th>
+                      <th><b>Doc 3</b></th>
+                      <th><b>Doc 4</b></th>
+                      <th><b>Doc 5</b></th>
+                  </tr>
+              </thead>
+              <tbody style="margin-left:15px; border: 2px solid rgb(60, 91, 148); padding:10px; border-radius: 50px 20px;">
+                  <template lwc:if={prodPayment}>
+                      <template for:each={prodPayment} for:item="itemP">
+                          <tr key={itemP.ID_CTA}>
+                            <td>{itemP.ID_CTA}</td>
+                            <td>{itemP.ID_Pago}</td>
+                            <td>{itemP.ID_Tipo_Pago}</td>
+                            <td>
+                                <lightning-formatted-number 
+                                    value={itemP.Pago}
+                                    format-style="currency"
+                                    currency-code="MXN"
+                                    currency-display-as="symbol"
+                                    maximum-fraction-digits="2"
+                                    >
+                                </lightning-formatted-number>
+                              </td>
+                              <td>{itemP.Metodo}</td>
+                              <td>{itemP.Fecha}</td>
+                              <td>{itemP.Doc1}</td>
+                              <td>{itemP.Doc2}</td>
+                              <td>{itemP.Doc3}</td>
+                              <td>{itemP.Doc4}</td>
+                              <td>{itemP.Doc5}</td>
+                            <!--<td>{itemP.ssot__Description__c}</td>
+                              <td>
+                                <lightning-formatted-number 
+                                    value={itemP.ssot__OrderedQuantity__c}
+                                    format-style="decimal"
+                                    maximum-fraction-digits="0"
+                                    >
+                                </lightning-formatted-number>
+                              </td>
+                             -->
+                          </tr>
+                      </template>
+                  </template>
+              </tbody>
+          </table>
+            </div>
+        </template>
+    </lightning-layout-item>
+</div>  
+</template>

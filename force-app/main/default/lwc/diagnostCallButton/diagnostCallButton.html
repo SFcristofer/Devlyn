@@ -1,0 +1,62 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Diagnóstico" icon-name="standard:medication_statement">       
+            <lightning-button variant="brand" 
+                    label={showDiag} 
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>   
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(227, 87, 87); padding:20px; width:100%;">
+                            <tr>
+                                <th><b>Fecha</b></th>
+                                <th><b>Miopia</b></th>
+                                <th><b>Hipermetropia</b></th>
+                                <th><b>Astigmatismo</b></th>
+                                <th><b>Presbicia</b></th>
+                                <th><b>No Presenta Error</b></th>
+                                <th><b>Experiencia LC</b></th>
+                            </tr>
+                        </thead>
+                        <tbody style="border: 2px solid rgb(227, 87, 87); padding:10px; border-radius: 50px 20px;">
+                            <template lwc:if={cdpData}>
+                                <div class="spinner">
+                                    <template if:true={isLoading}>
+                                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                                         </lightning-spinner>
+                                    </template>
+                                </div>  
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.ID_CLIENTE__c}>
+                                        <td>{item.FECHA__c}</td>
+                                        <td lwc:if={item.MIOPIA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td lwc:if={item.HIPERMETROPIA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td lwc:if={item.ASTIGMATISMO__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td lwc:if={item.PRESBICIA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td lwc:if={item.NO_PRESENTA_ERROR__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td lwc:if={item.EXPERIENCIA_LC__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>

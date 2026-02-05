@@ -1,0 +1,110 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Antecedente Médico" icon-name="standard:care_request_reviewer">       
+            <lightning-button variant="brand" 
+                    label={showAM} 
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>
+                <div class="spinner">
+                    <template if:true={isLoading}>
+                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                         </lightning-spinner>
+                    </template>
+                </div>   
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(60, 91, 148); padding:20px; background-color: rgb(255, 255, 255); width:15%;"> 
+                        </thead>
+                        <tbody style="border: 2px solid rgba(60, 91, 148); padding:10px; border-radius: 50px 20px; background-color: rgb(255, 255, 255);">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.DataSource__c}>
+                                        <th style="width: 500px;"><b>Fuente</b></th>
+                                        <td>{item.DataSource__c}</td>
+                                    </tr>
+                                    <tr key={item.FECHA__c}>
+                                        <th><b>Fecha</b></th>
+                                        <td>{item.FECHA__c}</td>
+                                    </tr>
+                                    <tr key={item.ARDOR_IRRITACION__c}>
+                                        <th><b>Ardor Irritación</b></th>
+                                        <td lwc:if={item.ARDOR_IRRITACION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.COMEZON__c}>
+                                        <th><b>Comezón</b></th>
+                                        <td lwc:if={item.COMEZON__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.DESTELLOS_DE_LUZ__c}>
+                                        <th><b>Destellos de Luz</b></th>
+                                        <td lwc:if={item.DESTELLOS_DE_LUZ__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.DIABETES__c}>
+                                        <th><b>Diabetes</b></th>
+                                        <td lwc:if={item.DIABETES__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.DOLOR_CABEZA__c}>
+                                        <th><b>Dolor Cabeza</b></th>
+                                        <td lwc:if={item.DOLOR_CABEZA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.EMBARAZO__c}>
+                                        <th><b>Embarazo</b></th>
+                                        <td lwc:if={item.EMBARAZO__cc}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.INFECCION__c}>
+                                        <th><b>Infección</b></th>
+                                        <td lwc:if={item.INFECCION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.HIPERTENSION__c}>
+                                        <th><b>Hipertensión</b></th>
+                                        <td lwc:if={item.HIPERTENSION__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.LAGRIMEO__c}>
+                                        <th><b>Lagrimeo</b></th>
+                                        <td lwc:if={item.LAGRIMEO__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.LEGANA__c}>
+                                        <th><b>Lagaña</b></th>
+                                        <td lwc:if={item.LEGANA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.VISION_BORROSA__c}>
+                                        <th><b>Visión Borrosa</b></th>
+                                        <td lwc:if={item.VISION_BORROSA__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.RESEQUEDAD_OCULAR__c}>
+                                        <th><b>Resequedad Ocular</b></th>
+                                        <td lwc:if={item.RESEQUEDAD_OCULAR__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                    </tr>
+                                    <tr key={item.NOTAS__c}>
+                                        <th><b>Notas</b></th>
+                                        <td>{item.NOTAS__c}</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>

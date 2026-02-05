@@ -1,0 +1,57 @@
+<template>
+    <div class="slds-m-top_medium">
+    <lightning-layout-item>
+        <lightning-card title="Productos" icon-name="standard:order_item"></lightning-card>
+    </lightning-layout-item>
+    <lightning-layout-item>
+        <template lwc:if={cdpProducto}>
+            <div class="slds-scrollable slds-m-around_medium">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+              <thead style="border-top: 4px solid rgb(60, 91, 148); padding:10px;">
+                  <tr>
+                      <th><b>Id Producto</b></th>
+                      <th><b>Producto</b></th>
+                      <th><b>Cantidad</b></th>
+                      <th><b>Monto</b></th>
+                  </tr>
+              </thead>
+              <tbody style="margin-left:15px; border: 2px solid rgb(60, 91, 148); padding:10px; border-radius: 50px 20px;">
+                  <template lwc:if={cdpProducto}>
+                      <template for:each={cdpProducto} for:item="itemP">
+                          <tr key={itemP.ssot__ProductId__c}>
+                            <td>{itemP.ssot__ProductId__c}</td>  
+                            <td>{itemP.ssot__Description__c}</td>
+                              <td>
+                                <lightning-formatted-number 
+                                    value={itemP.ssot__OrderedQuantity__c}
+                                    format-style="decimal"
+                                    maximum-fraction-digits="0"
+                                    >
+                                </lightning-formatted-number>
+                              </td>
+                              <td>
+                                <lightning-formatted-number 
+                                    value={itemP.ssot__TotalLineAmount__c}
+                                    format-style="currency"
+                                    currency-code="MXN"
+                                    currency-display-as="symbol"
+                                    maximum-fraction-digits="2"
+                                    >
+                                </lightning-formatted-number>
+                              </td>
+                          </tr>
+                      </template>
+                  </template>
+                  <template lwc:else>
+                      <p>Sin productos</p>
+                  </template>
+              </tbody>
+          </table>
+            </div>
+        </template>
+        <template lwc:else>
+            <p>Sin productos</p>
+        </template>
+    </lightning-layout-item>
+</div>  
+</template>

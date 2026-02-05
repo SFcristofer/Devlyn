@@ -1,0 +1,110 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Graduación" icon-name="standard:skill_entity">       
+            <lightning-button variant="brand"
+                    label={showGrad}
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>
+                <div class="spinner">
+                    <template if:true={isLoading}>
+                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                         </lightning-spinner>
+                    </template>
+                </div>    
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(60, 91, 148); padding:20px; background-color: rgb(255, 255, 255); width:15%;">
+                            <tr>
+                                <th><b>Fecha</b></th>
+                                <th><b>ID Grad Pedido</b></th>
+                                <th><b>Valor 1</b></th>
+                                <th><b>Valor 2</b></th>
+                                <th><b>Valor 3</b></th>
+                                <th><b>Valor 4</b></th>
+                                <th><b>Valor 5</b></th>
+                                <th><b>Valor 6</b></th>
+                                <th><b>Valor 7</b></th>
+                                <th><b>Valor 8</b></th>
+                            </tr>
+                        </thead>
+                        <tbody style="border: 2px solid rgba(60, 91, 148); padding:10px; border-radius: 50px 20px; background-color: rgb(255, 255, 255);">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.ID_Ped}>
+                                        <td>{item.fecha}</td>
+                                        <td>{item.ID_GradPed}</td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor1}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor2}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor3}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor4}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor5}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor6}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor7}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Valor8}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="3">
+                                            </lightning-formatted-number>
+                                        </td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                    </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>

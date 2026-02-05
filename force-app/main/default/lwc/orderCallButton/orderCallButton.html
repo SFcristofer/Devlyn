@@ -1,0 +1,110 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Ordenes POS" icon-name="standard:orders">       
+            <lightning-button variant="brand" 
+                    label={showOrders} 
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>  
+                <div class="spinner">
+                    <template if:true={isLoading}>
+                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                         </lightning-spinner>
+                    </template>
+                </div>   
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                   <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(60, 91, 148); padding:20px; width:100%;">
+                            <tr>
+                                <th><b>ID Pedido</b></th>
+                                <th><b>ID Orden</b></th>
+                                <th><b>Monto Total</b></th>
+                                <th><b>IVA</b></th>
+                                <th><b>Entregado</b></th>
+                                <th><b>Fecha de Entrega</b></th>
+                                <th><b>Fecha Promesa</b></th>
+                                <th><b>Fuente</b></th>
+                                <th><b>Entrega a Domicilio</b></th>
+                                <th><b>ID VTEX</b></th>
+                                <th><b>Sucursal</b></th>
+                            </tr>
+                        </thead>
+                        <tbody style="border: 2px solid rgba(60, 91, 148); padding:10px; border-radius: 50px 20px;">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.clienteId__c} class={item.rowSelected}>
+                                        <td>
+                                            <a href="#" onclick={handleRowClick} data-id={item.Pedido}>
+                                                <p>{item.Pedido}</p>
+                                            </a>
+                                        </td>
+                                        <td>{item.Orden}</td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.Total}
+                                                format-style="currency"
+                                                currency-code="MXN"
+                                                currency-display-as="symbol"
+                                                maximum-fraction-digits="2"
+                                            >
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.IVA}
+                                                format-style="currency"
+                                                currency-code="MXN"
+                                                currency-display-as="symbol"
+                                                maximum-fraction-digits="2"
+                                            >
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td lwc:if={item.Entregado}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td>{item.FEntrega}</td>
+                                        <td>{item.PrEntrega}</td>
+                                        <td>{item.Fuente}</td>
+                                        <td lwc:if={item.EntDom}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td>{item.ID_VTEX}</td>
+                                        <td>{item.sucursal}</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                   </div>
+                </template>
+            </lightning-layout-item>
+            <lightning-layout-item>
+                <div class="slds-m-left_xx-large">
+                    <template lwc:if={cdpProducto}>
+                        <div class="spinner">
+                            <template if:true={isLoading}>
+                                 <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                                 </lightning-spinner>
+                            </template>
+                        </div>   
+                        <c-orderlistdetail cdp-producto={cdpProducto}></c-orderlistdetail>
+                    </template>
+                    <template lwc:if={prodPayment}>
+                        <div class="spinner">
+                            <template if:true={isLoading}>
+                                 <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                                 </lightning-spinner>
+                            </template>
+                        </div>   
+                        <c-order-paymentdetail prod-payment={prodPayment}></c-order-paymentdetail>
+                    </template>
+                </div>
+            </lightning-layout-item>
+        </template>  
+</template>

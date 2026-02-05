@@ -1,0 +1,73 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Driver Visual" icon-name="standard:document_preview">       
+            <lightning-button variant="brand" 
+                    label={showDV} 
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>   
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="spinner">
+                        <template if:true={isLoading}>
+                             <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                             </lightning-spinner>
+                        </template>
+                    </div>  
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(143, 186, 242); padding:20px; width:100%;">
+                            <tr>
+                                <th><b>Fecha</b></th>
+                                <th><b>ID Razon Visita</b></th>
+                                <th><b>ID Tiempo Exámen</b></th>
+                                <th><b>Nivel Visión</b></th>
+                                <th><b>Solución Visual Busca</b></th>
+                                <th><b>Tipo Usuario</b></th>
+                                <th><b>Utiliza Solución Visual</b></th>
+                                <th><b>Valor Razón Vista</b></th>
+                                <th><b>Valor Tiempo Exámen</b></th>
+                            </tr>
+                        </thead>
+                        <tbody style="border: 2px solid rgb(143, 186, 242); padding:10px; border-radius: 50px 20px;">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.ID_CLIENTE__c}>
+                                        <td>{item.FECHA__c}</td>
+                                        <td>
+                                            <lightning-formatted-number 
+                                                value={item.ID_RAZON_VISITA__c}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>
+                                        <lightning-formatted-number 
+                                                value={item.ID_TIEMPO_EXAMEN__c}
+                                                format-style="decimal"
+                                                maximum-fraction-digits="0">
+                                            </lightning-formatted-number>
+                                        </td>
+                                        <td>{item.NIVEL_VISION__c}</td>
+                                        <td>{item.SOLUCION_VISUAL_BUSCA__c}</td>
+                                        <td>{item.TIPO_USUARIO__c}</td>
+                                        <td lwc:if={item.UTILIZA_SOLUCION_VISUAL__c}>SI</td>
+                                        <td lwc:else>NO</td>
+                                        <td>{item.VALOR_RAZON_VISTA__c}</td>
+                                        <td>{item.VALOR_TIEMPO_EXAMEN__c}</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                    </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>

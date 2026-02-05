@@ -1,0 +1,56 @@
+<template>
+    <lightning-layout-item>
+            <lightning-card title="Citas" icon-name="standard:service_appointment">       
+            <lightning-button variant="brand"
+                    label={showCita}
+                    onclick= {handleClick}
+                    >
+            </lightning-button>
+        </lightning-card>     
+    </lightning-layout-item>    
+            <template if:true={isVisible}>
+                <div class="spinner">
+                    <template if:true={isLoading}>
+                         <lightning-spinner alternative-text="Loading" variant="brand" size="large">
+                         </lightning-spinner>
+                    </template>
+                </div>   
+                <lightning-layout-item>
+                  <template lwc:if={cdpData}>
+                    <div class="slds-scrollable slds-m-around_medium">
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_striped slds-max-medium-table_stacked-horizontal">
+                        <thead style="border-top:6px solid rgb(60, 91, 148); padding:20px; background-color: rgb(255, 255, 255); width:15%;">
+                            <tr>
+                                <th><b>Cita Inicio</b></th>
+                                <th><b>Cita Fin</b></th>
+                                <th><b>Id Actividad</b></th>
+                                <th><b>Status</b></th>
+                                <th><b>Descripción</b></th>
+                                <th><b>Sucursal</b></th>
+                                <th><b>Notas</b></th>
+                            </tr>
+                        </thead>
+                        <tbody style="border: 2px solid rgba(60, 91, 148); padding:10px; border-radius: 50px 20px; background-color: rgb(255, 255, 255);">
+                            <template lwc:if={cdpData}>
+                                <template for:each={cdpData} for:item="item">
+                                    <tr key={item.memberid__c}>
+                                        <td>{item.start_date__c}</td>
+                                        <td>{item.end_date__c}</td>
+                                        <td>{item.activity_lid__c}</td>
+                                        <td>{item.estatus_cita__c}</td>
+                                        <td>{item.activityTitle__c}</td>
+                                        <td>{item.areaTitle__c}</td>
+                                        <td>{item.resources_notes__c}</td>
+                                    </tr>
+                                </template>                 
+                            </template>
+                            <template lwc:elseif={error}>
+                                <p>Error aqui {error}</p>
+                            </template>
+                        </tbody>
+                    </table>
+                    </div>
+                </template>
+            </lightning-layout-item>
+        </template>  
+</template>
