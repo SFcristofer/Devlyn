@@ -1,9 +1,11 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import getProfileInfo from '@salesforce/apex/TechProfile360Controller.getProfileInfo';
+import getProfileByUnifiedId from '@salesforce/apex/TechProfile360Controller.getProfileByUnifiedId';
 import getCustomerMetrics from '@salesforce/apex/TechProfile360Controller.getCustomerMetrics';
 
 export default class TechPatient360Profile extends LightningElement {
     @api recordId;
+    @api isUnifiedId = false; // Nueva bandera para saber si el recordId es ya un UnifiedId
     unifiedId;
     
     // Datos del Paciente (ahora dinámicos)
@@ -31,14 +33,27 @@ export default class TechPatient360Profile extends LightningElement {
         familyRelations: []
     };
 
+    // Caso 1: Viene de un registro de Salesforce (Account/Contact)
     @wire(getProfileInfo, { recordId: '$recordId' })
-    wiredProfile({ error, data }) {
-        if (data) {
-            console.log('Profile Data:', data);
+    wiredProfileFromLink({ error, data }) {
+        if (!this.isUnifiedId && data) {
+            console.log('Profile Data from Link:', data);
             this.unifiedId = data.ssot__Id__c;
             this.processProfileData(data);
         } else if (error) {
-            console.error('Error fetching profile:', error);
+            console.error('Error fetching profile from link:', error);
+        }
+    }
+
+    // Caso 2: Viene directo de la búsqueda (UnifiedId)
+    @wire(getProfileByUnifiedId, { unifiedId: '$recordId' })
+    wiredProfileDirect({ error, data }) {
+        if (this.isUnifiedId && data) {
+            console.log('Profile Data Direct:', data);
+            this.unifiedId = data.ssot__Id__c;
+            this.processProfileData(data);
+        } else if (error) {
+            console.error('Error fetching profile direct:', error);
         }
     }
 

@@ -1,0 +1,28 @@
+<template>
+    <div class="slds-p-around_small">
+        <!-- Componente de Búsqueda Superior -->
+        <c-tech-profile-search onprofileselect={handleProfileSelect}></c-tech-profile-search>
+
+        <!-- Separador -->
+        <div class="slds-p-top_medium"></div>
+
+        <!-- Componente Perfil 360 (Se muestra cuando hay un perfil seleccionado) -->
+        <template if:true={selectedUnifiedId}>
+            <c-tech-patient360-profile 
+                record-id={selectedUnifiedId} 
+                is-unified-id="true">
+            </c-tech-patient360-profile>
+        </template>
+
+        <template if:false={selectedUnifiedId}>
+            <lightning-card>
+                <div class="slds-p-around_large slds-text-align_center">
+                    <lightning-icon icon-name="utility:user" size="large"></lightning-icon>
+                    <div class="slds-p-top_medium slds-text-heading_small">
+                        Selecciona un perfil unificado para ver el Dashboard 360.
+                    </div>
+                </div>
+            </lightning-card>
+        </template>
+    </div>
+</template>

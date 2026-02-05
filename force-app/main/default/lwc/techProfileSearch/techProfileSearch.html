@@ -1,0 +1,84 @@
+<template>
+    <lightning-card title="Profile Explorer (Unified Profiles)" icon-name="standard:search">
+        <div class="slds-p-around_medium">
+            
+            <!-- Flujo de Selección Estilo Data Cloud -->
+            <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-4">
+                    <lightning-combobox
+                        label="Select Data Space"
+                        value={selectedDataSpace}
+                        options={dataSpaceOptions}
+                        onchange={handleDataSpaceChange}
+                        placeholder="default">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <lightning-combobox
+                        label="Select an option"
+                        value={selectedObject}
+                        options={objectOptions}
+                        onchange={handleObjectChange}
+                        placeholder="Select Object">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <lightning-combobox
+                        label="Select attribute"
+                        value={selectedAttribute}
+                        options={attributeOptions}
+                        onchange={handleAttributeChange}
+                        disabled={isAttributeDisabled}
+                        placeholder="Select Attribute">
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-m-top_large">
+                        <lightning-input 
+                            type="search" 
+                            variant="label-hidden" 
+                            placeholder="Enter search value..." 
+                            onchange={handleSearchChange}
+                            value={searchTerm}
+                            disabled={isSearchDisabled}>
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-grid slds-grid_align-end slds-p-bottom_medium">
+                <lightning-button 
+                    label="Search" 
+                    variant="brand" 
+                    onclick={handleSearchAction} 
+                    disabled={isSearchDisabled}>
+                </lightning-button>
+            </div>
+
+            <!-- Tabla de Resultados -->
+            <template if:true={hasResults}>
+                <div class="slds-border_top slds-p-top_medium">
+                    <div style="height: 300px;">
+                        <lightning-datatable
+                            key-field="ssot__Id__c"
+                            data={searchResults}
+                            columns={columns}
+                            max-row-selection="1"
+                            onrowselection={handleRowSelection}>
+                        </lightning-datatable>
+                    </div>
+                </div>
+            </template>
+
+            <template if:true={noResults}>
+                <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
+                    No se encontraron perfiles para los criterios seleccionados.
+                </div>
+            </template>
+
+            <template if:true={isSearching}>
+                <lightning-spinner alt-text="Searching..." size="medium"></lightning-spinner>
+            </template>
+        </div>
+    </lightning-card>
+</template>
