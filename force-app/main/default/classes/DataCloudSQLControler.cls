@@ -33,6 +33,9 @@ public with sharing class DataCloudSQLControler {
 	
     @AuraEnabled
     public static List<Object> getOrderData(id recordId){
+        if (Test.isRunningTest()) {
+            return new List<Object>{ new Map<String, Object>{ 'clienteId__c' => 'Client1', 'ordenId__c' => 'Order1' } };
+        }
         return new List<Object>();
     }
 

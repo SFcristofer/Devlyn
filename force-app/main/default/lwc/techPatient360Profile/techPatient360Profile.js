@@ -206,7 +206,7 @@ export default class TechPatient360Profile extends LightningElement {
     @wire(getCustomerMetrics, { unifiedId: '$unifiedId' })
     wiredMetrics({ error, data }) {
         if (data) {
-            console.log('Metrics Data:', data);
+            console.log('Metrics Data Received:', data);
             this.patientData = {
                 ...this.patientData,
                 totalSales: data.totalSales || 0,
@@ -214,7 +214,12 @@ export default class TechPatient360Profile extends LightningElement {
                 avgTicket: data.avgTicket || 0,
                 daysSinceLastPurchase: data.daysSinceLastPurchase || 0,
                 lastBranch: data.lastBranch || 'N/A',
-                lastCategory: data.lastCategory || 'N/A'
+                lastCategory: data.lastCategory || 'N/A',
+                // Nuevos campos para el resumen de compras
+                retailTotal: data.retailTotal || 0,
+                retailCategories: data.retailCategories || { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+                ecommerceTotal: data.ecommerceTotal || 0,
+                ecommerceCategories: data.ecommerceCategories || { Solares: 0, LentesContacto: 0, Oftalmicos: 0 }
             };
         } else if (error) {
             console.error('Error fetching metrics:', error);

@@ -425,53 +425,106 @@ public with sharing class TechProfile360Controller {
         Map<String, Object> metrics = new Map<String, Object>();
         
         try {
-            // Intentamos calcularlo basándonos en las órdenes que ya podemos consultar
             List<Map<String, Object>> orders = getOrders(unifiedId);
             
+            Decimal totalSales = 0;
+            Integer orderCount = 0;
+            Decimal retailTotal = 0;
+            Decimal ecommerceTotal = 0;
+            
+            Map<String, Integer> retailCategories = new Map<String, Integer>{'Solares' => 0, 'LentesContacto' => 0, 'Oftalmicos' => 0};
+            Map<String, Integer> ecommerceCategories = new Map<String, Integer>{'Solares' => 0, 'LentesContacto' => 0, 'Oftalmicos' => 0};
+            
+            Date lastPurchase = null;
+            String lastBranch = 'N/A';
+            String lastCategory = 'N/A';
+
             if (!orders.isEmpty()) {
-                Decimal totalAmount = 0;
-                Integer count = orders.size();
-                Date lastPurchase = null;
+                orderCount = orders.size();
                 
-                for (Map<String, Object> o : orders) {
-                    Decimal val = (Decimal)o.get('total');
-                    if (val != null) totalAmount += val;
+                for (Integer i = 0; i < orders.size(); i++) {
+                    Map<String, Object> o = orders[i];
+                    Decimal orderTotal = (Decimal)o.get('total');
+                    if (orderTotal != null) totalSales += orderTotal;
                     
+                    // Determinar canal (Retail vs Ecommerce)
+                    String storeName = (String)o.get('sucursal');
+                    Boolean isEcommerce = (storeName != null && (storeName.toLowerCase().contains('ecommerce') || storeName.toLowerCase().contains('vtex') || storeName.toLowerCase().contains('online')));
+                    
+                    if (isEcommerce) {
+                        ecommerceTotal += (orderTotal != null ? orderTotal : 0);
+                    } else {
+                        retailTotal += (orderTotal != null ? orderTotal : 0);
+                    }
+
+                    // Procesar categorías de productos
+                    List<Map<String, Object>> products = (List<Map<String, Object>>)o.get('productos');
+                    if (products != null) {
+                        for (Map<String, Object> p : products) {
+                            String productDesc = (String)p.get('nombre');
+                            String category = categorizeProduct(productDesc);
+                            
+                            if (isEcommerce) {
+                                if (ecommerceCategories.containsKey(category)) {
+                                    ecommerceCategories.put(category, ecommerceCategories.get(category) + 1);
+                                }
+                            } else {
+                                if (retailCategories.containsKey(category)) {
+                                    retailCategories.put(category, retailCategories.get(category) + 1);
+                                }
+                            }
+                            
+                            // Guardar la categoría del pedido más reciente
+                            if (i == 0 && lastCategory == 'N/A') {
+                                lastCategory = category;
+                            }
+                        }
+                    }
+
+                    // Última compra y sucursal
                     Datetime dt = (Datetime)o.get('fechaCompra');
                     if (dt != null) {
                         Date d = dt.date();
-                        if (lastPurchase == null || d > lastPurchase) lastPurchase = d;
+                        if (lastPurchase == null || d > lastPurchase) {
+                            lastPurchase = d;
+                            if (i == 0) lastBranch = storeName;
+                        }
                     }
                 }
-                
-                metrics.put('totalSales', totalAmount);
-                metrics.put('orderCount', count);
-                metrics.put('avgTicket', count > 0 ? (totalAmount / count).setScale(2) : 0);
-                
-                if (lastPurchase != null) {
-                    metrics.put('daysSinceLastPurchase', lastPurchase.daysBetween(Date.today()));
-                } else {
-                    metrics.put('daysSinceLastPurchase', 0);
-                }
-            } else {
-                // Si no hay órdenes, valores en cero o N/A
-                metrics.put('totalSales', 0);
-                metrics.put('orderCount', 0);
-                metrics.put('avgTicket', 0);
-                metrics.put('daysSinceLastPurchase', 'N/A');
             }
+
+            metrics.put('totalSales', totalSales);
+            metrics.put('orderCount', orderCount);
+            metrics.put('avgTicket', orderCount > 0 ? (totalSales / orderCount).setScale(2) : 0);
+            metrics.put('daysSinceLastPurchase', lastPurchase != null ? lastPurchase.daysBetween(Date.today()) : 0);
+            metrics.put('lastBranch', lastBranch);
+            metrics.put('lastCategory', lastCategory);
             
-            // Datos adicionales fijos por ahora
-            metrics.put('lastBranch', !orders.isEmpty() ? orders[0].get('sucursal') : 'N/A');
-            metrics.put('lastCategory', 'N/A');
+            // Nuevos campos para el resumen de compras
+            metrics.put('retailTotal', retailTotal);
+            metrics.put('retailCategories', retailCategories);
+            metrics.put('ecommerceTotal', ecommerceTotal);
+            metrics.put('ecommerceCategories', ecommerceCategories);
 
         } catch (Exception e) {
             System.debug('Error calculating metrics: ' + e.getMessage());
-            // Fallback a mock si algo falla
             metrics.put('totalSales', 0);
             metrics.put('orderCount', 0);
+            metrics.put('retailTotal', 0);
+            metrics.put('ecommerceTotal', 0);
         }
         
         return metrics;
+    }
+
+    /**
+     * @description Helper to categorize products based on description.
+     */
+    private static String categorizeProduct(String description) {
+        if (description == null) return 'Oftalmicos'; // Default
+        String d = description.toLowerCase();
+        if (d.contains('solar') || d.contains('sol ')) return 'Solares';
+        if (d.contains('contacto') || d.contains('lc ') || d.contains('pupilentes')) return 'LentesContacto';
+        return 'Oftalmicos';
     }
 }
