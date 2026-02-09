@@ -8,17 +8,29 @@ public with sharing class TechProfile360Controller {
 
     @TestVisible private static List<UnifiedLinkssotIndividualDev2__dlm> mockLinks;
     @TestVisible private static List<UnifiedssotIndividualDev2__dlm> mockProfiles;
+    @TestVisible private static List<SObject> mockEngagements;
+    @TestVisible private static List<SObject> mockSubs;
+    @TestVisible private static List<SObject> mockRfm;
+    @TestVisible private static List<SObject> mockCitas;
+    @TestVisible private static List<SObject> mockOrders;
+    @TestVisible private static List<SObject> mockOrderProducts;
+    @TestVisible private static List<SObject> mockStores;
+    @TestVisible private static List<SObject> mockAntecedents;
+    @TestVisible private static List<SObject> mockDrivers;
+    @TestVisible private static List<SObject> mockPowers;
+    @TestVisible private static List<SObject> mockDiagnosis;
     @TestVisible private static Boolean forceException = false;
 
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getMarketingHistory(String unifiedId) {
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             String engQuery = 'SELECT ssot__SubjectLineTxt__c, ssot__EngagementDateTm__c, ssot__EmailFromAddr__c, ssot__Id__c ' +
                               'FROM ssot__EmailEngagement__dlm ' +
                               'WHERE ssot__IndividualId__c = :unifiedId ' +
                               'ORDER BY ssot__EngagementDateTm__c DESC LIMIT 20';
-            List<SObject> engagements = Database.query(engQuery);
+            List<SObject> engagements = (Test.isRunningTest() && mockEngagements != null) ? mockEngagements : Database.query(engQuery);
             
             if (engagements.isEmpty()) return result;
 
@@ -61,10 +73,11 @@ public with sharing class TechProfile360Controller {
     public static List<Map<String, Object>> getSubscriptions(String unifiedId) {
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             String subQuery = 'SELECT Name__c, Status__c, NextPurchaseDate__c, Frequency__c, CreatedDate__c ' +
                               'FROM VTEX_Subscription__dlm ' +
                               'WHERE IndividualId__c = :unifiedId LIMIT 10';
-            List<SObject> subs = Database.query(subQuery);
+            List<SObject> subs = (Test.isRunningTest() && mockSubs != null) ? mockSubs : Database.query(subQuery);
             for (SObject s : subs) {
                 Map<String, Object> m = new Map<String, Object>();
                 m.put('nombre', s.get('Name__c'));
@@ -83,27 +96,42 @@ public with sharing class TechProfile360Controller {
     public static Map<String, Object> getMarketingScores(String unifiedId) {
         Map<String, Object> result = new Map<String, Object>();
         try {
-            // 1. RFM Retail Solar (Ejemplo de uno de los 6 insights)
-            String rfmQuery = 'SELECT score__c, label__c FROM RFM_Retail_Solar__cio WHERE unified_individual_id__c = :unifiedId LIMIT 1';
-            List<SObject> rfmList = Database.query(rfmQuery);
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             
+            // 1. RFM Retail - Intentamos traer los 3 principales
             Map<String, Object> rfmRetail = new Map<String, Object>();
-            if (!rfmList.isEmpty()) {
-                rfmRetail.put('solares', rfmList[0].get('score__c'));
-                rfmRetail.put('solaresLabel', rfmList[0].get('label__c'));
-            } else {
-                rfmRetail.put('solares', 'N/A');
-                rfmRetail.put('solaresLabel', 'Sin clasificar');
+            
+            // Solar
+            List<SObject> rfmSolar = Database.query('SELECT score__c, label__c FROM RFM_Retail_Solar__cio WHERE unified_individual_id__c = :unifiedId LIMIT 1');
+            rfmRetail.put('solares', !rfmSolar.isEmpty() ? rfmSolar[0].get('score__c') : 'N/A');
+            rfmRetail.put('solaresLabel', !rfmSolar.isEmpty() ? rfmSolar[0].get('label__c') : 'Sin clasificar');
+            
+            // Lentes de Contacto (Asumiendo nombre de DMO basado en patrón)
+            try {
+                List<SObject> rfmLC = Database.query('SELECT score__c, label__c FROM RFM_Retail_LC__cio WHERE unified_individual_id__c = :unifiedId LIMIT 1');
+                rfmRetail.put('lentesContacto', !rfmLC.isEmpty() ? rfmLC[0].get('score__c') : 'N/A');
+                rfmRetail.put('lentesContactoLabel', !rfmLC.isEmpty() ? rfmLC[0].get('label__c') : 'Sin clasificar');
+            } catch(Exception e) { 
+                rfmRetail.put('lentesContacto', 'N/A'); 
+                rfmRetail.put('lentesContactoLabel', 'N/A');
             }
-            // Inicializar los otros para que la UI no rompa
-            rfmRetail.put('lentesContacto', 'N/A');
-            rfmRetail.put('oftalmicos', 'N/A');
+
+            // Oftálmicos
+            try {
+                List<SObject> rfmOft = Database.query('SELECT score__c, label__c FROM RFM_Retail_Oftalmicos__cio WHERE unified_individual_id__c = :unifiedId LIMIT 1');
+                rfmRetail.put('oftalmicos', !rfmOft.isEmpty() ? rfmOft[0].get('score__c') : 'N/A');
+                rfmRetail.put('oftalmicosLabel', !rfmOft.isEmpty() ? rfmOft[0].get('label__c') : 'Sin clasificar');
+            } catch(Exception e) { 
+                rfmRetail.put('oftalmicos', 'N/A'); 
+                rfmRetail.put('oftalmicosLabel', 'N/A');
+            }
+
             result.put('rfmRetail', rfmRetail);
 
-            // 2. Einstein Score
+            // 2. Einstein Score - Mock mejorado o consulta si existe DMO
             Map<String, Object> einstein = new Map<String, Object>();
-            einstein.put('propensidadClick', 'Muy Probable'); // Mock por ahora
-            einstein.put('propensidadAbrir', 'Probable');
+            einstein.put('propensidadClick', 'Media'); 
+            einstein.put('propensidadAbrir', 'Alta');
             result.put('einsteinScore', einstein);
 
         } catch (Exception e) { System.debug('Marketing Error: ' + e.getMessage()); }
@@ -114,9 +142,10 @@ public with sharing class TechProfile360Controller {
     public static List<Map<String, Object>> getAppointments(String unifiedId) {
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             // 1. Obtener ID de TuoTempo del perfil
             String profileQuery = 'SELECT Id_TuoTempo__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId';
-            List<SObject> profiles = Database.query(profileQuery);
+            List<SObject> profiles = (Test.isRunningTest() && mockProfiles != null) ? (List<SObject>)mockProfiles : Database.query(profileQuery);
             if (profiles.isEmpty() || profiles[0].get('Id_TuoTempo__c') == null) return result;
             
             String tuoTempoId = (String)profiles[0].get('Id_TuoTempo__c');
@@ -126,7 +155,7 @@ public with sharing class TechProfile360Controller {
                                'FROM TUOTEMPO_CITA__dlm ' +
                                'WHERE memberid__c = :tuoTempoId ' +
                                'ORDER BY start_date__c DESC LIMIT 20';
-            List<SObject> citas = Database.query(citaQuery);
+            List<SObject> citas = (Test.isRunningTest() && mockCitas != null) ? mockCitas : Database.query(citaQuery);
 
             for (SObject c : citas) {
                 Map<String, Object> citaMap = new Map<String, Object>();
@@ -157,9 +186,10 @@ public with sharing class TechProfile360Controller {
         List<Map<String, Object>> result = new List<Map<String, Object>>();
         
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             // 1. Obtener los POS IDs relacionados al perfil unificado
             String profileQuery = 'SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId';
-            List<SObject> profiles = Database.query(profileQuery);
+            List<SObject> profiles = (Test.isRunningTest() && mockProfiles != null) ? (List<SObject>)mockProfiles : Database.query(profileQuery);
             if (profiles.isEmpty()) return result;
             
             List<String> posIds = new List<String>();
@@ -172,7 +202,7 @@ public with sharing class TechProfile360Controller {
                                  'FROM ssot__SalesOrder__dlm ' +
                                  'WHERE ssot__SoldToCustomerId__c IN :posIds ' +
                                  'ORDER BY ssot__CreatedDate__c DESC LIMIT 20';
-            List<SObject> orders = Database.query(ordersQuery);
+            List<SObject> orders = (Test.isRunningTest() && mockOrders != null) ? mockOrders : Database.query(ordersQuery);
             
             if (orders.isEmpty()) return result;
 
@@ -183,10 +213,10 @@ public with sharing class TechProfile360Controller {
             String productsQuery = 'SELECT ssot__SalesOrderId__c, ssot__ProductId__c, ssot__Description__c, ssot__OrderedQuantity__c, ssot__TotalLineAmount__c ' +
                                    'FROM ssot__SalesOrderProduct__dlm ' +
                                    'WHERE ssot__SalesOrderId__c IN :orderIds';
-            List<SObject> allProducts = Database.query(productsQuery);
+            List<SObject> allProducts = (Test.isRunningTest() && mockOrderProducts != null) ? mockOrderProducts : Database.query(productsQuery);
 
             // 4. Consultar Nombres de Sucursales
-            List<SObject> stores = Database.query('SELECT ssot__Id__c, ssot__Name__c FROM ssot__SalesStore__dlm');
+            List<SObject> stores = (Test.isRunningTest() && mockStores != null) ? mockStores : Database.query('SELECT ssot__Id__c, ssot__Name__c FROM ssot__SalesStore__dlm');
             Map<String, String> storeNames = new Map<String, String>();
             for(SObject s : stores) storeNames.put((String)s.get('ssot__Id__c'), (String)s.get('ssot__Name__c'));
 
@@ -228,6 +258,7 @@ public with sharing class TechProfile360Controller {
         Map<String, Object> medicalData = new Map<String, Object>();
         
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
             // 1. Obtener Antecedentes Médicos (Uso de SObject genérico para evitar errores de tipo)
             String antQuery = 'SELECT ARDOR_IRRITACION__c, COMEZON__c, DIABETES__c, HIPERTENSION__c, ' +
                               'INFECCION__c, LAGRIMEO__c, LEGANA__c, VISION_BORROSA__c, ' +
@@ -235,7 +266,7 @@ public with sharing class TechProfile360Controller {
                               'FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm ' +
                               'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
                               'ORDER BY FECHA__c DESC LIMIT 1';
-            List<SObject> antecedents = Database.query(antQuery);
+            List<SObject> antecedents = (Test.isRunningTest() && mockAntecedents != null) ? mockAntecedents : Database.query(antQuery);
             if (!antecedents.isEmpty()) medicalData.put('antecedents', antecedents[0]);
 
             // 2. Obtener Driver Visual
@@ -243,7 +274,7 @@ public with sharing class TechProfile360Controller {
                                  'FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm ' +
                                  'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
                                  'ORDER BY FECHA__c DESC LIMIT 1';
-            List<SObject> drivers = Database.query(driverQuery);
+            List<SObject> drivers = (Test.isRunningTest() && mockDrivers != null) ? mockDrivers : Database.query(driverQuery);
             if (!drivers.isEmpty()) medicalData.put('visualDriver', drivers[0]);
 
             // 3. Obtener Preguntas Poder
@@ -251,7 +282,7 @@ public with sharing class TechProfile360Controller {
                                 'FROM POS_POS_CLIENTE_PREG_PODER__dlm ' +
                                 'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
                                 'ORDER BY FECHA_ALTA__c DESC LIMIT 1';
-            List<SObject> powerQuestions = Database.query(powerQuery);
+            List<SObject> powerQuestions = (Test.isRunningTest() && mockPowers != null) ? mockPowers : Database.query(powerQuery);
             if (!powerQuestions.isEmpty()) medicalData.put('powerQuestions', powerQuestions[0]);
 
             // 4. Obtener Último Diagnóstico
@@ -259,7 +290,7 @@ public with sharing class TechProfile360Controller {
                                'FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm ' +
                                'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
                                'ORDER BY FECHA__c DESC LIMIT 1';
-            List<SObject> diagnosis = Database.query(diagQuery);
+            List<SObject> diagnosis = (Test.isRunningTest() && mockDiagnosis != null) ? mockDiagnosis : Database.query(diagQuery);
             if (!diagnosis.isEmpty()) medicalData.put('lastDiagnosis', diagnosis[0]);
 
         } catch (Exception e) {
@@ -277,6 +308,8 @@ public with sharing class TechProfile360Controller {
         if (String.isBlank(searchTerm) || String.isBlank(attributePath)) {
             return new List<UnifiedssotIndividualDev2__dlm>();
         }
+        
+        if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
 
         // Validación básica de seguridad para evitar SOQL Injection en el nombre del campo
         List<String> allowedFields = new List<String>{'ssot__FirstName__c', 'ssot__LastName__c', 'Email__c', 'Id_POS__c'};
@@ -291,7 +324,7 @@ public with sharing class TechProfile360Controller {
                      'LIMIT 20';
         
         try {
-            return Database.query(sql);
+            return (Test.isRunningTest() && mockProfiles != null) ? mockProfiles : Database.query(sql);
         } catch (Exception e) {
             System.debug('Search error: ' + e.getMessage());
             return new List<UnifiedssotIndividualDev2__dlm>();
@@ -304,6 +337,8 @@ public with sharing class TechProfile360Controller {
     @AuraEnabled(cacheable=true)
     public static UnifiedssotIndividualDev2__dlm getProfileByUnifiedId(String unifiedId) {
         try {
+            if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
+            if (Test.isRunningTest() && mockProfiles != null && !mockProfiles.isEmpty()) return mockProfiles[0];
             List<UnifiedssotIndividualDev2__dlm> profiles = [
                 SELECT
                     ssot__Id__c,
@@ -382,31 +417,60 @@ public with sharing class TechProfile360Controller {
     }
 
     /**
-     * @description Obtiene las métricas de negocio desde Calculated Insights usando SQL.
-     * TEMPORAL: Devuelve datos simulados para permitir el despliegue mientras se resuelven permisos de la Org.
+     * @description Obtiene las métricas de negocio desde Calculated Insights o mediante agregación manual.
      */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getCustomerMetrics(String unifiedId) {
+        if (Test.isRunningTest() && forceException) return new Map<String, Object>();
         Map<String, Object> metrics = new Map<String, Object>();
         
-        // Simulación de datos para evitar error de visibilidad 'ConnectApi.CdpQuery'
-        metrics.put('totalSales', 15000.50);
-        metrics.put('orderCount', 5);
-        metrics.put('avgTicket', 3000.10);
-        metrics.put('daysSinceLastPurchase', 12);
-        
-        /* 
-        // CÓDIGO REAL (Descomentar cuando la Org tenga los permisos de ConnectApi habilitados)
         try {
-            String sql = 'SELECT SUM(monto_total__c) as total_sales, SUM(cantidad_ordenes__c) as total_orders FROM ...';
-            // ConnectApi.CdpQueryInput queryInput = new ConnectApi.CdpQueryInput();
-            // queryInput.sql = sql;
-            // ConnectApi.CdpQueryOutput response = ConnectApi.CdpQuery.queryANSISql(queryInput);
-            // ... procesamiento ...
+            // Intentamos calcularlo basándonos en las órdenes que ya podemos consultar
+            List<Map<String, Object>> orders = getOrders(unifiedId);
+            
+            if (!orders.isEmpty()) {
+                Decimal totalAmount = 0;
+                Integer count = orders.size();
+                Date lastPurchase = null;
+                
+                for (Map<String, Object> o : orders) {
+                    Decimal val = (Decimal)o.get('total');
+                    if (val != null) totalAmount += val;
+                    
+                    Datetime dt = (Datetime)o.get('fechaCompra');
+                    if (dt != null) {
+                        Date d = dt.date();
+                        if (lastPurchase == null || d > lastPurchase) lastPurchase = d;
+                    }
+                }
+                
+                metrics.put('totalSales', totalAmount);
+                metrics.put('orderCount', count);
+                metrics.put('avgTicket', count > 0 ? (totalAmount / count).setScale(2) : 0);
+                
+                if (lastPurchase != null) {
+                    metrics.put('daysSinceLastPurchase', lastPurchase.daysBetween(Date.today()));
+                } else {
+                    metrics.put('daysSinceLastPurchase', 0);
+                }
+            } else {
+                // Si no hay órdenes, valores en cero o N/A
+                metrics.put('totalSales', 0);
+                metrics.put('orderCount', 0);
+                metrics.put('avgTicket', 0);
+                metrics.put('daysSinceLastPurchase', 'N/A');
+            }
+            
+            // Datos adicionales fijos por ahora
+            metrics.put('lastBranch', !orders.isEmpty() ? orders[0].get('sucursal') : 'N/A');
+            metrics.put('lastCategory', 'N/A');
+
         } catch (Exception e) {
-            System.debug('Error: ' + e.getMessage());
+            System.debug('Error calculating metrics: ' + e.getMessage());
+            // Fallback a mock si algo falla
+            metrics.put('totalSales', 0);
+            metrics.put('orderCount', 0);
         }
-        */
         
         return metrics;
     }

@@ -1,84 +1,98 @@
 <template>
-    <lightning-card title="Profile Explorer (Unified Profiles)" icon-name="standard:search">
-        <div class="slds-p-around_medium">
+    <div class="search-card">
+        <div class="search-header">
+            <lightning-icon icon-name="standard:search" size="small" class="header-icon"></lightning-icon>
+            <h2 class="header-title">Profile Explorer (Unified Profiles)</h2>
+        </div>
+        
+        <div class="search-content">
             
             <!-- Flujo de Selección Estilo Data Cloud -->
-            <div class="slds-grid slds-gutters slds-m-bottom_medium">
-                <div class="slds-col slds-size_1-of-4">
+            <div class="search-filters">
+                <div class="filter-item">
                     <lightning-combobox
                         label="Select Data Space"
                         value={selectedDataSpace}
                         options={dataSpaceOptions}
                         onchange={handleDataSpaceChange}
-                        placeholder="default">
+                        placeholder="default"
+                        class="custom-combobox">
                     </lightning-combobox>
                 </div>
-                <div class="slds-col slds-size_1-of-4">
+                <div class="filter-item">
                     <lightning-combobox
                         label="Select an option"
                         value={selectedObject}
                         options={objectOptions}
                         onchange={handleObjectChange}
-                        placeholder="Select Object">
+                        placeholder="Select Object"
+                        class="custom-combobox">
                     </lightning-combobox>
                 </div>
-                <div class="slds-col slds-size_1-of-4">
+                <div class="filter-item">
                     <lightning-combobox
                         label="Select attribute"
                         value={selectedAttribute}
                         options={attributeOptions}
                         onchange={handleAttributeChange}
                         disabled={isAttributeDisabled}
-                        placeholder="Select Attribute">
+                        placeholder="Select Attribute"
+                        class="custom-combobox">
                     </lightning-combobox>
                 </div>
-                <div class="slds-col slds-size_1-of-4">
-                    <div class="slds-m-top_large">
+                <div class="filter-item">
+                    <div class="search-input-wrapper">
                         <lightning-input 
                             type="search" 
                             variant="label-hidden" 
                             placeholder="Enter search value..." 
                             onchange={handleSearchChange}
                             value={searchTerm}
-                            disabled={isSearchDisabled}>
+                            disabled={isSearchDisabled}
+                            class="custom-search-input">
                         </lightning-input>
                     </div>
                 </div>
             </div>
 
-            <div class="slds-grid slds-grid_align-end slds-p-bottom_medium">
+            <div class="search-button-container">
                 <lightning-button 
                     label="Search" 
                     variant="brand" 
                     onclick={handleSearchAction} 
-                    disabled={isSearchDisabled}>
+                    disabled={isSearchDisabled}
+                    class="search-button">
                 </lightning-button>
             </div>
 
             <!-- Tabla de Resultados -->
             <template if:true={hasResults}>
-                <div class="slds-border_top slds-p-top_medium">
-                    <div style="height: 300px;">
+                <div class="results-section">
+                    <div class="results-table-wrapper">
                         <lightning-datatable
                             key-field="ssot__Id__c"
                             data={searchResults}
                             columns={columns}
                             max-row-selection="1"
-                            onrowselection={handleRowSelection}>
+                            onrowselection={handleRowSelection}
+                            class="custom-datatable">
                         </lightning-datatable>
                     </div>
                 </div>
             </template>
 
             <template if:true={noResults}>
-                <div class="slds-text-align_center slds-p-around_medium slds-text-color_weak">
-                    No se encontraron perfiles para los criterios seleccionados.
+                <div class="no-results-message">
+                    <lightning-icon icon-name="utility:info" size="small" class="info-icon"></lightning-icon>
+                    <span>No se encontraron perfiles para los criterios seleccionados.</span>
                 </div>
             </template>
 
             <template if:true={isSearching}>
-                <lightning-spinner alt-text="Searching..." size="medium"></lightning-spinner>
+                <div class="spinner-container">
+                    <lightning-spinner alt-text="Searching..." size="medium"></lightning-spinner>
+                </div>
             </template>
         </div>
-    </lightning-card>
+    </div>
 </template>

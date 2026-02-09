@@ -79,9 +79,15 @@ export default class TechPatient360Profile extends LightningElement {
     wiredMarketing({ error, data }) {
         if (data) {
             console.log('Marketing Scores Received:', data);
-            if (data.einsteinScore) this.einsteinScore = data.einsteinScore;
-            if (data.rfmRetail) this.rfmRetail = { ...this.rfmRetail, ...data.rfmRetail };
-            if (data.rfmEcommerce) this.rfmEcommerce = { ...this.rfmEcommerce, ...data.rfmEcommerce };
+            if (data.einsteinScore) {
+                this.einsteinScore = { ...data.einsteinScore };
+            }
+            if (data.rfmRetail) {
+                this.rfmRetail = { ...this.rfmRetail, ...data.rfmRetail };
+            }
+            if (data.rfmEcommerce) {
+                this.rfmEcommerce = { ...this.rfmEcommerce, ...data.rfmEcommerce };
+            }
         }
     }
 
@@ -206,7 +212,9 @@ export default class TechPatient360Profile extends LightningElement {
                 totalSales: data.totalSales || 0,
                 orderCount: data.orderCount || 0,
                 avgTicket: data.avgTicket || 0,
-                daysSinceLastPurchase: data.daysSinceLastPurchase || 0
+                daysSinceLastPurchase: data.daysSinceLastPurchase || 0,
+                lastBranch: data.lastBranch || 'N/A',
+                lastCategory: data.lastCategory || 'N/A'
             };
         } else if (error) {
             console.error('Error fetching metrics:', error);

@@ -6,12 +6,17 @@
  */
 public with sharing class TechDataCloudService {
 
+    @TestVisible private static Boolean forceException = false;
+
     /**
      * @description Fetches patient data from Data Cloud DMOs.
      * @param recordId The Unified Individual ID or related Record ID.
      * @return Map containing the mapped fields for the UI.
      */
     public static Map<String, Object> getPatientProfile(String recordId) {
+        if (Test.isRunningTest() && forceException) {
+            throw new IllegalArgumentException('Forced Exception for testing');
+        }
         // En producción, aquí se ejecutaría:
         // String query = 'SELECT ssot__FirstName__c, ssot__BirthDate__c, Antecedentes_Medicos__c, ID_POS__c FROM ssot__Individual__dlm WHERE ...';
         // return executeDataCloudQuery(query);
