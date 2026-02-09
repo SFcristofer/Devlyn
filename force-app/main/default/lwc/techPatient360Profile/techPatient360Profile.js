@@ -100,8 +100,32 @@ export default class TechPatient360Profile extends LightningElement {
         }
     }
 
+    _wiredSubscriptions;
+
+    // ... (en handleRefresh) ...
+    async handleRefresh() {
+        this.isLoading = true;
+        try {
+            await Promise.all([
+                refreshApex(this._wiredMedical),
+                refreshApex(this._wiredMetrics),
+                refreshApex(this._wiredOrders),
+                refreshApex(this._wiredAppointments),
+                refreshApex(this._wiredQuotes),
+                refreshApex(this._wiredSubscriptions)
+            ]);
+            console.log('Refresh exitoso');
+        } catch (error) {
+            console.error('Error al refrescar:', error);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
     @wire(getSubscriptions, { unifiedId: '$unifiedId' })
-    wiredSubscriptions({ error, data }) {
+    wiredSubscriptions(result) {
+        this._wiredSubscriptions = result;
+        const { error, data } = result;
         if (data) {
             console.log('Subscriptions Received:', data);
             this.subscriptions = data.map(sub => ({
@@ -109,6 +133,8 @@ export default class TechPatient360Profile extends LightningElement {
                 fechaCreacion: sub.fechaCreacion ? new Date(sub.fechaCreacion).toLocaleDateString() : 'N/A',
                 proximaCompra: sub.proximaCompra ? new Date(sub.proximaCompra).toLocaleDateString() : 'N/A',
                 isExpanded: false,
+                status: sub.status || 'Activa',
+                hasProducts: sub.productos && sub.productos.length > 0,
                 chevronIcon: 'utility:chevrondown',
                 chevronClass: 'toggle-icon',
                 detailsClass: 'suscripcion-details collapsed'
@@ -149,12 +175,129 @@ export default class TechPatient360Profile extends LightningElement {
         }
     }
 
+    _wiredQuotes;
+    _wiredSubscriptions;
+    _wiredMarketingHistory;
+    _wiredMarketingScores;
+
+    async handleRefresh() {
+        this.isLoading = true;
+        try {
+            await Promise.all([
+                refreshApex(this._wiredMedical),
+                refreshApex(this._wiredMetrics),
+                refreshApex(this._wiredOrders),
+                refreshApex(this._wiredAppointments),
+                refreshApex(this._wiredQuotes),
+                refreshApex(this._wiredSubscriptions),
+                refreshApex(this._wiredMarketingHistory),
+                refreshApex(this._wiredMarketingScores)
+            ]);
+            console.log('Refresh exitoso');
+        } catch (error) {
+            console.error('Error al refrescar:', error);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    @wire(getMarketingHistory, { unifiedId: '$unifiedId' })
+    wiredMarketingHistory(result) {
+        this._wiredMarketingHistory = result;
+        const { error, data } = result;
+        if (data) {
+            console.log('Marketing History Received:', data);
+            // Restauramos la estructura original de campañas/envíos para que los acordeones funcionen
+            this.campaigns = data.map(camp => ({
+                ...camp,
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                chevronClass: 'toggle-icon',
+                detailsClass: 'campana-details collapsed',
+                envios: (camp.envios || []).map(envio => ({
+                    ...envio,
+                    fechaEnvio: envio.fechaEnvio ? new Date(envio.fechaEnvio).toLocaleDateString() : 'N/A',
+                    isExpanded: false,
+                    chevronIcon: 'utility:chevrondown',
+                    chevronClass: 'toggle-icon',
+                    detailsClass: 'envio-details collapsed'
+                }))
+            }));
+        }
+    }
+
+    @wire(getMarketingScores, { unifiedId: '$unifiedId' })
+    wiredMarketing(result) {
+        this._wiredMarketingScores = result;
+        const { error, data } = result;
+        if (data) {
+            console.log('Marketing Scores Received:', data);
+            if (data.einsteinScore) {
+                this.einsteinScore = { ...data.einsteinScore };
+            }
+            if (data.rfmRetail) {
+                this.rfmRetail = { ...this.rfmRetail, ...data.rfmRetail };
+            }
+            if (data.rfmEcommerce) {
+                this.rfmEcommerce = { ...this.rfmEcommerce, ...data.rfmEcommerce };
+            }
+        }
+    }
+
+    // Restauramos los métodos de toggle que fueron eliminados
+    toggleCampana(event) {
+        const campanaId = event.currentTarget.dataset.id;
+        this.campaigns = this.campaigns.map(camp => {
+            if (camp.nombre === campanaId) {
+                const newExpandedState = !camp.isExpanded;
+                return { 
+                    ...camp, 
+                    isExpanded: newExpandedState,
+                    chevronIcon: newExpandedState ? 'utility:chevronup' : 'utility:chevrondown',
+                    chevronClass: newExpandedState ? 'toggle-icon rotate' : 'toggle-icon',
+                    detailsClass: newExpandedState ? 'campana-details expanded' : 'campana-details collapsed'
+                };
+            }
+            return camp;
+        });
+    }
+    
+    toggleEnvio(event) {
+        const envioIndex = parseInt(event.currentTarget.dataset.index, 10);
+        const campanaIndex = parseInt(event.currentTarget.dataset.campana, 10);
+        
+        this.campaigns = this.campaigns.map((camp, cIdx) => {
+            if (cIdx === campanaIndex) {
+                const updatedEnvios = camp.envios.map((envio, eIdx) => {
+                    if (eIdx === envioIndex) {
+                        const newExpandedState = !envio.isExpanded;
+                        return { 
+                            ...envio, 
+                            isExpanded: newExpandedState,
+                            chevronIcon: newExpandedState ? 'utility:chevronup' : 'utility:chevrondown',
+                            chevronClass: newExpandedState ? 'toggle-icon rotate' : 'toggle-icon',
+                            detailsClass: newExpandedState ? 'envio-details expanded' : 'envio-details collapsed'
+                        };
+                    }
+                    return envio;
+                });
+                return { ...camp, envios: updatedEnvios };
+            }
+            return camp;
+        });
+    }
+
     @wire(getQuotes, { unifiedId: '$unifiedId' })
-    wiredQuotes({ error, data }) {
+    wiredQuotes(result) {
+        this._wiredQuotes = result;
+        const { error, data } = result;
         if (data) {
             this.quotes = data.map(quote => ({
                 ...quote,
+                total: quote.total ? Number(quote.total).toFixed(2) : '0.00',
+                fecha: quote.fecha ? new Date(quote.fecha).toLocaleDateString() : 'N/A',
                 isExpanded: false,
+                status: quote.status || 'Borrador',
                 chevronIcon: 'utility:chevrondown',
                 chevronClass: 'toggle-icon',
                 productosClass: 'cotizacion-productos collapsed'
@@ -301,11 +444,30 @@ export default class TechPatient360Profile extends LightningElement {
                 daysSinceLastPurchase: data.daysSinceLastPurchase || 0,
                 lastBranch: data.lastBranch || 'N/A',
                 lastCategory: data.lastCategory || 'N/A',
-                // Nuevos campos para el resumen de compras
                 retailTotal: data.retailTotal || 0,
                 retailCategories: data.retailCategories || { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
                 ecommerceTotal: data.ecommerceTotal || 0,
                 ecommerceCategories: data.ecommerceCategories || { Solares: 0, LentesContacto: 0, Oftalmicos: 0 }
+            };
+
+            // Sincronizamos con RFM Detail para que sea visible en Marketing
+            this.rfmRetail = {
+                ...this.rfmRetail,
+                solares: data.retailCategories.Solares,
+                lentesContacto: data.retailCategories.LentesContacto,
+                oftalmicos: data.retailCategories.Oftalmicos,
+                solaresLabel: data.retailCategories.Solares > 0 ? 'Cliente Activo' : 'Sin Compras',
+                lentesContactoLabel: data.retailCategories.LentesContacto > 0 ? 'Cliente Activo' : 'Sin Compras',
+                oftalmicosLabel: data.retailCategories.Oftalmicos > 0 ? 'Cliente Activo' : 'Sin Compras'
+            };
+            this.rfmEcommerce = {
+                ...this.rfmEcommerce,
+                solares: data.ecommerceCategories.Solares,
+                lentesContacto: data.ecommerceCategories.LentesContacto,
+                oftalmicos: data.ecommerceCategories.Oftalmicos,
+                solaresLabel: data.ecommerceCategories.Solares > 0 ? 'Cliente Activo' : 'Sin Compras',
+                lentesContactoLabel: data.ecommerceCategories.LentesContacto > 0 ? 'Cliente Activo' : 'Sin Compras',
+                oftalmicosLabel: data.ecommerceCategories.Oftalmicos > 0 ? 'Cliente Activo' : 'Sin Compras'
             };
         } else if (error) {
             console.error('Error fetching metrics:', error);

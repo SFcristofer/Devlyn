@@ -463,46 +463,53 @@
                     <!-- ========== TAB 4: COTIZACIONES ========== -->
                     <template if:true={isTabCotizaciones}>
                         <div class="tab-content-wrapper">
-                            <div class="scrollable-content">
-                                <template if:true={hasQuotes}>
-                                    <template for:each={quotes} for:item="quote">
-                                        <div key={quote.presupuestoId} class="cotizacion-card">
-                                            <div class="cotizacion-header" data-id={quote.presupuestoId} onclick={toggleCotizacion}>
+                            <template if:true={hasQuotes}>
+                                <template for:each={quotes} for:item="quote">
+                                    <div key={quote.presupuestoId} class="cotizacion-card slds-m-bottom_small">
+                                        <div class="cotizacion-header" data-id={quote.presupuestoId} onclick={toggleCotizacion}>
+                                            <div class="orden-title">
                                                 <lightning-icon icon-name="utility:quote" size="small"></lightning-icon>
                                                 <span>Presupuesto: {quote.presupuestoId}</span>
-                                                <span>Fecha: {quote.fecha}</span>
-                                                <span>Fecha Expiración: {quote.fechaExpiracion}</span>
+                                            </div>
+                                            <div class="orden-meta">
+                                                <span class="status-badge-blue">{quote.status}</span>
                                                 <span>Total: ${quote.total}</span>
+                                                <span>Fecha: {quote.fecha}</span>
                                                 <lightning-icon icon-name={quote.chevronIcon} size="x-small" class={quote.chevronClass}></lightning-icon>
                                             </div>
+                                        </div>
+                                        
+                                        <div class={quote.productosClass}>
+                                            <div class="orden-info-row">
+                                                <span><strong>Válido hasta:</strong> {quote.fechaExpiracion}</span>
+                                                <span><strong>Sucursal:</strong> {quote.sucursal}</span>
+                                            </div>
                                             
-                                            <div class={quote.productosClass}>
-                                                <template for:each={quote.productos} for:item="producto">
-                                                    <div key={producto.sku} class="producto-item">
-                                                        <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
-                                                        <div class="producto-details">
-                                                            <div class="producto-name">Producto: {producto.nombre}</div>
-                                                            <div class="producto-info">
-                                                                <span>SKU: {producto.sku}</span>
-                                                                <span>Cantidad: {producto.cantidad}</span>
-                                                            </div>
-                                                            <div class="producto-pricing">
-                                                                <span>Precio Total: ${producto.precioTotal}</span>
-                                                            </div>
+                                            <template for:each={quote.productos} for:item="producto">
+                                                <div key={producto.sku} class="producto-item">
+                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
+                                                    <div class="producto-details">
+                                                        <div class="producto-name">{producto.nombre}</div>
+                                                        <div class="producto-info">
+                                                            <span>SKU: {producto.sku}</span>
+                                                            <span>Cantidad: {producto.cantidad}</span>
+                                                        </div>
+                                                        <div class="producto-pricing">
+                                                            <span>Precio Total: ${producto.precioTotal}</span>
                                                         </div>
                                                     </div>
-                                                </template>
-                                            </div>
+                                                </div>
+                                            </template>
                                         </div>
-                                    </template>
-                                </template>
-                                <template if:false={hasQuotes}>
-                                    <div class="slds-text-align_center slds-p-around_xx-large slds-text-color_weak">
-                                        <lightning-icon icon-name="utility:quote" size="small" class="slds-m-bottom_small"></lightning-icon>
-                                        <p>No hay cotizaciones disponibles para este perfil.</p>
                                     </div>
                                 </template>
-                            </div>
+                            </template>
+                            <template if:false={hasQuotes}>
+                                <div class="slds-text-align_center slds-p-around_xx-large slds-text-color_weak">
+                                    <lightning-icon icon-name="utility:quote" size="small" class="slds-m-bottom_small"></lightning-icon>
+                                    <p>No hay cotizaciones disponibles para este perfil.</p>
+                                </div>
+                            </template>
                         </div>
                     </template>
                     
@@ -511,47 +518,36 @@
                         <div class="tab-content-wrapper">
                             <template if:true={hasSubscriptions}>
                                 <template for:each={subscriptions} for:item="sub">
-                                    <div key={sub.nombre} class="suscripcion-card">
+                                    <div key={sub.nombre} class="suscripcion-card slds-m-bottom_small">
                                         <div class="suscripcion-header" data-id={sub.nombre} onclick={toggleSuscripcion}>
-                                            <lightning-icon icon-name="utility:recurring_exception" size="small"></lightning-icon>
-                                            <span>{sub.nombre}</span>
-                                            <span>Estatus: {sub.status}</span>
-                                            <span>Fecha Creación: {sub.fechaCreacion}</span>
-                                            <lightning-icon icon-name={sub.chevronIcon} size="x-small" class={sub.chevronClass}></lightning-icon>
+                                            <div class="orden-title">
+                                                <lightning-icon icon-name="utility:recurring_exception" size="small"></lightning-icon>
+                                                <span>{sub.nombre}</span>
+                                            </div>
+                                            <div class="orden-meta">
+                                                <span class="status-badge">{sub.status}</span>
+                                                <span>Frecuencia: {sub.frecuencia}</span>
+                                                <lightning-icon icon-name={sub.chevronIcon} size="x-small" class={sub.chevronClass}></lightning-icon>
+                                            </div>
                                         </div>
                                         
                                         <div class={sub.detailsClass}>
-                                            <div class="suscripcion-info">
-                                                <span>Frecuencia: {sub.frecuencia}</span>
-                                                <span>Ciclos completados: {sub.ciclosCompletados}</span>
-                                            </div>
-                                            <div class="suscripcion-info">
-                                                <span>Última compra: {sub.ultimaCompra}</span>
-                                                <span>Próxima compra: {sub.proximaCompra}</span>
+                                            <div class="orden-info-row">
+                                                <span><strong>Fecha Creación:</strong> {sub.fechaCreacion}</span>
+                                                <span><strong>Próxima Compra:</strong> {sub.proximaCompra}</span>
                                             </div>
                                             
-                                            <template for:each={sub.productos} for:item="producto">
-                                                <div key={producto.sku} class="suscripcion-productos">
-                                                    <div class="suscripcion-producto-header">
-                                                        <span>SKU: {producto.sku}</span>
-                                                        <span>Cantidad: {producto.cantidad}</span>
-                                                    </div>
-                                                    
-                                                    <div class="adjunto-section">
-                                                        <div class="adjunto-title">Adjuntos:</div>
-                                                        
-                                                        <template for:each={producto.adjuntos} for:item="adjunto">
-                                                            <div key={adjunto.numero} class="adjunto-item">
-                                                                <span class="adjunto-number">{adjunto.numero}. Nombre: {adjunto.nombre}</span>
-                                                                <div class="adjunto-details">
-                                                                    <span>Cilindro: {adjunto.cilindro}</span>
-                                                                    <span>Eje (Axis): {adjunto.eje}°</span>
-                                                                    <span>Poder: {adjunto.poder}</span>
-                                                                </div>
+                                            <template if:true={sub.hasProducts}>
+                                                <template for:each={sub.productos} for:item="producto">
+                                                    <div key={producto.sku} class="producto-item">
+                                                        <div class="producto-details">
+                                                            <div class="producto-name">SKU: {producto.sku}</div>
+                                                            <div class="producto-info">
+                                                                <span>Cantidad: {producto.cantidad}</span>
                                                             </div>
-                                                        </template>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </template>
                                             </template>
                                         </div>
                                     </div>
@@ -560,7 +556,7 @@
                             <template if:false={hasSubscriptions}>
                                 <div class="slds-text-align_center slds-p-around_xx-large slds-text-color_weak">
                                     <lightning-icon icon-name="utility:recurring_exception" size="small" class="slds-m-bottom_small"></lightning-icon>
-                                    <p>No hay suscripciones activas.</p>
+                                    <p>No hay suscripciones activas registradas para este perfil.</p>
                                 </div>
                             </template>
                         </div>
@@ -579,14 +575,14 @@
                                             <div class="score-item">
                                                 <lightning-icon icon-name="utility:click" size="small"></lightning-icon>
                                                 <div>
-                                                    <div>Propiensidad Click</div>
+                                                    <div class="slds-text-body_small">Propensión Click</div>
                                                     <div class="score-value">{einsteinScore.propensidadClick}</div>
                                                 </div>
                                             </div>
                                             <div class="score-item">
                                                 <lightning-icon icon-name="utility:open" size="small"></lightning-icon>
                                                 <div>
-                                                    <div>Propiensidad Abrir</div>
+                                                    <div class="slds-text-body_small">Propensión Abrir</div>
                                                     <div class="score-value">{einsteinScore.propensidadAbrir}</div>
                                                 </div>
                                             </div>
@@ -625,13 +621,15 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Campaña -->
+                                <!-- Campañas -->
                                 <template if:true={hasCampaigns}>
                                     <template for:each={campaigns} for:item="campana" for:index="campanaIdx">
-                                        <div key={campana.nombre} class="campana-card">
+                                        <div key={campana.nombre} class="campana-card slds-m-bottom_small">
                                             <div class="campana-header" data-id={campana.nombre} onclick={toggleCampana}>
-                                                <lightning-icon icon-name="utility:campaign" size="small"></lightning-icon>
-                                                <span>Campaña: {campana.nombre}</span>
+                                                <div class="orden-title">
+                                                    <lightning-icon icon-name="utility:campaign" size="small"></lightning-icon>
+                                                    <span>Campaña: {campana.nombre}</span>
+                                                </div>
                                                 <lightning-icon icon-name={campana.chevronIcon} size="x-small" class={campana.chevronClass}></lightning-icon>
                                             </div>
                                             
@@ -641,30 +639,20 @@
                                                 </div>
                                                 
                                                 <template for:each={campana.envios} for:item="envio" for:index="envioIdx">
-                                                    <div key={envio.uniqueKey} class="envio-item">
+                                                    <div key={envio.uniqueKey} class="envio-item slds-m-bottom_x-small">
                                                         <div class="envio-header" data-index={envioIdx} data-campana={campanaIdx} onclick={toggleEnvio}>
                                                             <lightning-icon icon-name={envio.icono} size="small"></lightning-icon>
-                                                            <span>{envio.tipo}: {envio.asunto}</span>
-                                                            <span>Fecha Envío: {envio.fechaEnvio}</span>
+                                                            <div class="slds-flex_grow">
+                                                                <div class="slds-text-title_bold">{envio.asunto}</div>
+                                                                <div class="slds-text-body_small">Fecha: {envio.fechaEnvio}</div>
+                                                            </div>
                                                             <lightning-icon icon-name={envio.chevronIcon} size="x-small" class={envio.chevronClass}></lightning-icon>
                                                         </div>
                                                         
                                                         <div class={envio.detailsClass}>
-                                                            <div class="envio-info">
-                                                                <span>Desde: {envio.desde}</span>
-                                                            </div>
-                                                            <div class="envio-info">
-                                                                <span>Asunto: {envio.asuntoCompleto}</span>
-                                                            </div>
-                                                            
-                                                            <div class="eventos-section">
-                                                                <div class="eventos-title">Eventos:</div>
-                                                                <template for:each={envio.eventos} for:item="evento">
-                                                                    <div key={evento.tipo} class="evento-item">
-                                                                        <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
-                                                                        <span>{evento.tipo} ({evento.fechaHora})</span>
-                                                                    </div>
-                                                                </template>
+                                                            <div class="envio-info slds-p-around_small">
+                                                                <div><strong>Desde:</strong> {envio.desde}</div>
+                                                                <div><strong>Asunto Completo:</strong> {envio.asuntoCompleto}</div>
                                                             </div>
                                                         </div>
                                                     </div>
