@@ -1,5 +1,8 @@
 <template>
     <div class="main-container">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Cargando perfil..." size="large" variant="brand"></lightning-spinner>
+        </template>
         <lightning-layout multiple-rows="true" class="slds-gutters_none">
             
             <!-- ========== PANEL LATERAL IZQUIERDO (25%) ========== -->
@@ -221,7 +224,20 @@
                                     <lightning-icon icon-name={driverVisualIcon} size="x-small" class={driverVisualIconClass}></lightning-icon>
                                 </div>
                                 <div class={driverVisualContentClass}>
-                                    <p>Contenido del Driver Visual...</p>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <strong>Nivel de Visión:</strong> {patientData.visualDriver.NIVEL_VISION__c}
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Tipo de Usuario:</strong> {patientData.visualDriver.TIPO_USUARIO__c}
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Solución que busca:</strong> {patientData.visualDriver.SOLUCION_VISUAL_BUSCA__c}
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Razón de visita:</strong> {patientData.visualDriver.VALOR_RAZON_VISITA__c}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -233,7 +249,17 @@
                                     <lightning-icon icon-name={preguntasPoderIcon} size="x-small" class={preguntasPoderIconClass}></lightning-icon>
                                 </div>
                                 <div class={preguntasPoderContentClass}>
-                                    <p>Contenido de Preguntas poder...</p>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <strong>Actividad aire libre:</strong> {patientData.powerQuestions.ACTIVIDAD_AIRE_LIBRE__c}
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Protege sus ojos:</strong> {patientData.powerQuestions.PROTEGE_SUS_OJOS__c}
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Necesidad de protección:</strong> {patientData.powerQuestions.NECESIDAD_PROTECCION__c}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -245,7 +271,35 @@
                                     <lightning-icon icon-name={graduacionesIcon} size="x-small" class={graduacionesIconClass}></lightning-icon>
                                 </div>
                                 <div class={graduacionesContentClass}>
-                                    <p>Contenido de Graduaciones...</p>
+                                    <template if:true={patientData.graduations}>
+                                        <table class="graduacion-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Ojo</th>
+                                                    <th>Esfera</th>
+                                                    <th>Cilindro</th>
+                                                    <th>Eje</th>
+                                                    <th>Adición</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={patientData.graduations} for:item="grad">
+                                                    <tr key={grad.id}>
+                                                        <td>{grad.fecha}</td>
+                                                        <td>{grad.ojo}</td>
+                                                        <td>{grad.esfera}</td>
+                                                        <td>{grad.cilindro}</td>
+                                                        <td>{grad.eje}</td>
+                                                        <td>{grad.adicion}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                    <template if:false={patientData.graduations}>
+                                        <p class="slds-text-color_weak">No hay graduaciones registradas en pedidos anteriores.</p>
+                                    </template>
                                 </div>
                             </div>
                             

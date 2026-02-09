@@ -907,6 +907,49 @@
     font-weight: 700;
 }
 
+/* ========== GRADUACIONES ========== */
+.graduacion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.graduacion-table th {
+    background: var(--bg-light);
+    color: var(--text-light);
+    font-weight: 700;
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.graduacion-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-dark);
+}
+
+.graduacion-table tr:hover {
+    background: rgba(79, 182, 187, 0.05);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.info-item strong {
+    color: var(--text-light);
+    margin-right: 0.5rem;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     :host {

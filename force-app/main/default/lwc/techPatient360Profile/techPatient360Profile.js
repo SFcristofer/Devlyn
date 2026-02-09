@@ -11,7 +11,41 @@ import getMarketingScores from '@salesforce/apex/TechProfile360Controller.getMar
 import getMarketingHistory from '@salesforce/apex/TechProfile360Controller.getMarketingHistory';
 
 export default class TechPatient360Profile extends LightningElement {
-    @api recordId;
+    _recordId;
+    @api 
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        if (value !== this._recordId) {
+            console.log('Record ID changed, resetting data:', value);
+            this._recordId = value;
+            this.resetState();
+        }
+    }
+
+    resetState() {
+        this.isLoading = true;
+        this.unifiedId = null;
+        this.orders = [];
+        this.appointments = [];
+        this.quotes = [];
+        this.subscriptions = [];
+        this.campaigns = [];
+        this.patientData = {
+            firstName: 'Cargando...', lastName: '', age: 0, gender: '', zipCode: '', email: '', phone: '', idPos: '',
+            totalSales: 0, orderCount: 0, avgTicket: 0, daysSinceLastPurchase: 0,
+            lastBranch: 'N/A', lastCategory: 'N/A',
+            retailTotal: 0, retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+            ecommerceTotal: 0, ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+            medicalHistory: [], medicalNotes: '', familyRelations: [], visualDriver: {}, powerQuestions: {}, graduations: []
+        };
+        this.diagnoses = [];
+        this.lastDiagnosisDate = 'N/A';
+        this.lastExamDate = 'N/A';
+    }
+
+    @track isLoading = false;
     @api isUnifiedId = false; 
     unifiedId;
     
@@ -156,6 +190,10 @@ export default class TechPatient360Profile extends LightningElement {
             if (ant.DIABETES__c == '1' || ant.DIABETES__c == true) history.push('Diabetes');
             if (ant.HIPERTENSION__c == '1' || ant.HIPERTENSION__c == true) history.push('Hipertensión');
             if (ant.VISION_BORROSA__c == '1' || ant.VISION_BORROSA__c == true) history.push('Visión Borrosa');
+            if (ant.INFECCION__c == '1' || ant.INFECCION__c == true) history.push('Infección');
+            if (ant.LAGRIMEO__c == '1' || ant.LAGRIMEO__c == true) history.push('Lagrimeo');
+            if (ant.LEGANA__c == '1' || ant.LEGANA__c == true) history.push('Legaña');
+            if (ant.RESEQUEDAD_OCULAR__c == '1' || ant.RESEQUEDAD_OCULAR__c == true) history.push('Resequedad Ocular');
             
             this.patientData.medicalHistory = history;
             this.patientData.medicalNotes = ant.NOTAS__c || 'Sin notas adicionales';
@@ -172,34 +210,55 @@ export default class TechPatient360Profile extends LightningElement {
             
             this.diagnoses = diagList.length > 0 ? diagList : ['No presenta error'];
             this.lastDiagnosisDate = diag.FECHA__c ? new Date(diag.FECHA__c).toLocaleDateString() : 'N/A';
+            this.lastExamDate = this.lastDiagnosisDate; // Usamos la misma fecha por ahora
         }
 
         // 3. Driver Visual y Preguntas Poder
         this.patientData.visualDriver = data.visualDriver || {};
         this.patientData.powerQuestions = data.powerQuestions || {};
+
+        // 4. Familia (Simulado por ahora hasta encontrar DMO de relación)
+        this.patientData.familyRelations = [
+            { idPos: 'FAM-001', name: 'María Pérez (Hija)', isLast: false },
+            { idPos: 'FAM-002', name: 'Roberto Pérez (Hijo)', isLast: true }
+        ];
+
+        // 5. Graduaciones (Historial simulado)
+        this.patientData.graduations = [
+            { id: 1, fecha: this.lastDiagnosisDate || 'N/A', ojo: 'OD', esfera: '-2.00', cilindro: '-0.50', eje: '10', adicion: '+1.50' },
+            { id: 2, fecha: this.lastDiagnosisDate || 'N/A', ojo: 'OI', esfera: '-2.25', cilindro: '-0.75', eje: '175', adicion: '+1.50' }
+        ];
     }
 
     // Caso 1: Viene de un registro de Salesforce (Account/Contact)
     @wire(getProfileInfo, { recordId: '$recordId' })
     wiredProfileFromLink({ error, data }) {
-        if (!this.isUnifiedId && data) {
-            console.log('Profile Data from Link:', data);
-            this.unifiedId = data.ssot__Id__c;
-            this.processProfileData(data);
-        } else if (error) {
-            console.error('Error fetching profile from link:', error);
+        if (!this.isUnifiedId) {
+            if (data) {
+                console.log('Profile Data from Link:', data);
+                this.unifiedId = data.ssot__Id__c;
+                this.processProfileData(data);
+                this.isLoading = false;
+            } else if (error) {
+                console.error('Error fetching profile from link:', error);
+                this.isLoading = false;
+            }
         }
     }
 
     // Caso 2: Viene directo de la búsqueda (UnifiedId)
     @wire(getProfileByUnifiedId, { unifiedId: '$recordId' })
     wiredProfileDirect({ error, data }) {
-        if (this.isUnifiedId && data) {
-            console.log('Profile Data Direct:', data);
-            this.unifiedId = data.ssot__Id__c;
-            this.processProfileData(data);
-        } else if (error) {
-            console.error('Error fetching profile direct:', error);
+        if (this.isUnifiedId) {
+            if (data) {
+                console.log('Profile Data Direct:', data);
+                this.unifiedId = data.ssot__Id__c;
+                this.processProfileData(data);
+                this.isLoading = false;
+            } else if (error) {
+                console.error('Error fetching profile direct:', error);
+                this.isLoading = false;
+            }
         }
     }
 
