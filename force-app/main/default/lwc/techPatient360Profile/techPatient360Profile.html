@@ -159,12 +159,25 @@
                     
                     <!-- Pestañas de Navegación -->
                     <div class="custom-tabs">
-                        <button class={tabExpedienteClass} onclick={handleTabExpediente}>Expediente Médico</button>
-                        <button class={tabOrdenesClass} onclick={handleTabOrdenes}>Ordenes</button>
-                        <button class={tabCitasClass} onclick={handleTabCitas}>Citas</button>
-                        <button class={tabCotizacionesClass} onclick={handleTabCotizaciones}>Cotizaciones</button>
-                        <button class={tabSuscripcionesClass} onclick={handleTabSuscripciones}>Suscripciones</button>
-                        <button class={tabEnviosMarketingClass} onclick={handleTabEnviosMarketing}>Envíos Marketing</button>
+                        <div class="tabs-scroll-container">
+                            <button class={tabExpedienteClass} onclick={handleTabExpediente}>Expediente Médico</button>
+                            <button class={tabOrdenesClass} onclick={handleTabOrdenes}>Ordenes</button>
+                            <button class={tabCitasClass} onclick={handleTabCitas}>Citas</button>
+                            <button class={tabCotizacionesClass} onclick={handleTabCotizaciones}>Cotizaciones</button>
+                            <button class={tabSuscripcionesClass} onclick={handleTabSuscripciones}>Suscripciones</button>
+                            <button class={tabEnviosMarketingClass} onclick={handleTabEnviosMarketing}>Envíos Marketing</button>
+                        </div>
+                        <div class="tab-actions">
+                            <lightning-button-icon 
+                                icon-name="utility:refresh" 
+                                variant="border-filled" 
+                                size="medium" 
+                                onclick={handleRefresh} 
+                                alternative-text="Refrescar Datos" 
+                                title="Refrescar Datos"
+                                class="refresh-action-btn">
+                            </lightning-button-icon>
+                        </div>
                     </div>
                     
                     <!-- ========== TAB 1: EXPEDIENTE MÉDICO ========== -->
@@ -224,20 +237,25 @@
                                     <lightning-icon icon-name={driverVisualIcon} size="x-small" class={driverVisualIconClass}></lightning-icon>
                                 </div>
                                 <div class={driverVisualContentClass}>
-                                    <div class="info-grid">
-                                        <div class="info-item">
-                                            <strong>Nivel de Visión:</strong> {patientData.visualDriver.NIVEL_VISION__c}
+                                    <template if:true={hasVisualDriver}>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <strong>Nivel de Visión:</strong> {patientData.visualDriver.NIVEL_VISION__c}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Tipo de Usuario:</strong> {patientData.visualDriver.TIPO_USUARIO__c}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Solución que busca:</strong> {patientData.visualDriver.SOLUCION_VISUAL_BUSCA__c}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Razón de visita:</strong> {patientData.visualDriver.VALOR_RAZON_VISITA__c}
+                                            </div>
                                         </div>
-                                        <div class="info-item">
-                                            <strong>Tipo de Usuario:</strong> {patientData.visualDriver.TIPO_USUARIO__c}
-                                        </div>
-                                        <div class="info-item">
-                                            <strong>Solución que busca:</strong> {patientData.visualDriver.SOLUCION_VISUAL_BUSCA__c}
-                                        </div>
-                                        <div class="info-item">
-                                            <strong>Razón de visita:</strong> {patientData.visualDriver.VALOR_RAZON_VISITA__c}
-                                        </div>
-                                    </div>
+                                    </template>
+                                    <template if:false={hasVisualDriver}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No hay registros de Driver Visual para este cliente.</p>
+                                    </template>
                                 </div>
                             </div>
                             
@@ -249,17 +267,22 @@
                                     <lightning-icon icon-name={preguntasPoderIcon} size="x-small" class={preguntasPoderIconClass}></lightning-icon>
                                 </div>
                                 <div class={preguntasPoderContentClass}>
-                                    <div class="info-grid">
-                                        <div class="info-item">
-                                            <strong>Actividad aire libre:</strong> {patientData.powerQuestions.ACTIVIDAD_AIRE_LIBRE__c}
+                                    <template if:true={hasPowerQuestions}>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <strong>Actividad aire libre:</strong> {patientData.powerQuestions.ACTIVIDAD_AIRE_LIBRE__c}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Protege sus ojos:</strong> {patientData.powerQuestions.PROTEGE_SUS_OJOS__c}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Necesidad de protección:</strong> {patientData.powerQuestions.NECESIDAD_PROTECCION__c}
+                                            </div>
                                         </div>
-                                        <div class="info-item">
-                                            <strong>Protege sus ojos:</strong> {patientData.powerQuestions.PROTEGE_SUS_OJOS__c}
-                                        </div>
-                                        <div class="info-item">
-                                            <strong>Necesidad de protección:</strong> {patientData.powerQuestions.NECESIDAD_PROTECCION__c}
-                                        </div>
-                                    </div>
+                                    </template>
+                                    <template if:false={hasPowerQuestions}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No hay registros de Preguntas Poder para este cliente.</p>
+                                    </template>
                                 </div>
                             </div>
                             
@@ -271,7 +294,7 @@
                                     <lightning-icon icon-name={graduacionesIcon} size="x-small" class={graduacionesIconClass}></lightning-icon>
                                 </div>
                                 <div class={graduacionesContentClass}>
-                                    <template if:true={patientData.graduations}>
+                                    <template if:true={hasGraduations}>
                                         <table class="graduacion-table">
                                             <thead>
                                                 <tr>
@@ -297,8 +320,8 @@
                                             </tbody>
                                         </table>
                                     </template>
-                                    <template if:false={patientData.graduations}>
-                                        <p class="slds-text-color_weak">No hay graduaciones registradas en pedidos anteriores.</p>
+                                    <template if:false={hasGraduations}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No hay registros de graduaciones para este cliente.</p>
                                     </template>
                                 </div>
                             </div>

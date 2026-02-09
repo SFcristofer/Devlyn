@@ -259,36 +259,50 @@ public with sharing class TechProfile360Controller {
         
         try {
             if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
-            // 1. Obtener Antecedentes Médicos (Uso de SObject genérico para evitar errores de tipo)
+            
+            // 1. Obtener los POS IDs relacionados al perfil unificado (Patrón que sí funciona en el Sidebar)
+            String profileQuery = 'SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId';
+            List<SObject> profiles = (Test.isRunningTest() && mockProfiles != null) ? (List<SObject>)mockProfiles : Database.query(profileQuery);
+            
+            if (profiles.isEmpty()) return medicalData;
+            
+            List<String> posIds = new List<String>();
+            for(SObject p : profiles) {
+                if(p.get('Id_POS__c') != null) posIds.add((String)p.get('Id_POS__c'));
+            }
+
+            if (posIds.isEmpty()) return medicalData;
+
+            // 2. Obtener Antecedentes Médicos
             String antQuery = 'SELECT ARDOR_IRRITACION__c, COMEZON__c, DIABETES__c, HIPERTENSION__c, ' +
                               'INFECCION__c, LAGRIMEO__c, LEGANA__c, VISION_BORROSA__c, ' +
                               'RESEQUEDAD_OCULAR__c, NOTAS__c, FECHA__c ' +
                               'FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm ' +
-                              'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
+                              'WHERE ID_CLIENTE__c IN :posIds ' +
                               'ORDER BY FECHA__c DESC LIMIT 1';
             List<SObject> antecedents = (Test.isRunningTest() && mockAntecedents != null) ? mockAntecedents : Database.query(antQuery);
             if (!antecedents.isEmpty()) medicalData.put('antecedents', antecedents[0]);
 
-            // 2. Obtener Driver Visual
+            // 3. Obtener Driver Visual
             String driverQuery = 'SELECT NIVEL_VISION__c, TIPO_USUARIO__c, SOLUCION_VISUAL_BUSCA__c, VALOR_RAZON_VISITA__c, FECHA__c ' +
                                  'FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm ' +
-                                 'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
+                                 'WHERE ID_CLIENTE__c IN :posIds ' +
                                  'ORDER BY FECHA__c DESC LIMIT 1';
             List<SObject> drivers = (Test.isRunningTest() && mockDrivers != null) ? mockDrivers : Database.query(driverQuery);
             if (!drivers.isEmpty()) medicalData.put('visualDriver', drivers[0]);
 
-            // 3. Obtener Preguntas Poder
+            // 4. Obtener Preguntas Poder
             String powerQuery = 'SELECT ACTIVIDAD_AIRE_LIBRE__c, PROTEGE_SUS_OJOS__c, NECESIDAD_PROTECCION__c, FECHA_ALTA__c ' +
                                 'FROM POS_POS_CLIENTE_PREG_PODER__dlm ' +
-                                'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
+                                'WHERE ID_CLIENTE__c IN :posIds ' +
                                 'ORDER BY FECHA_ALTA__c DESC LIMIT 1';
             List<SObject> powerQuestions = (Test.isRunningTest() && mockPowers != null) ? mockPowers : Database.query(powerQuery);
             if (!powerQuestions.isEmpty()) medicalData.put('powerQuestions', powerQuestions[0]);
 
-            // 4. Obtener Último Diagnóstico
+            // 5. Obtener Último Diagnóstico
             String diagQuery = 'SELECT ASTIGMATISMO__c, HIPERMETROPIA__c, MIOPIA__c, PRESBICIA__c, FECHA__c ' +
                                'FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm ' +
-                               'WHERE ID_CLIENTE__c IN (SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = :unifiedId) ' +
+                               'WHERE ID_CLIENTE__c IN :posIds ' +
                                'ORDER BY FECHA__c DESC LIMIT 1';
             List<SObject> diagnosis = (Test.isRunningTest() && mockDiagnosis != null) ? mockDiagnosis : Database.query(diagQuery);
             if (!diagnosis.isEmpty()) medicalData.put('lastDiagnosis', diagnosis[0]);

@@ -1,4 +1,5 @@
 import { LightningElement, api, track, wire } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import getProfileInfo from '@salesforce/apex/TechProfile360Controller.getProfileInfo';
 import getProfileByUnifiedId from '@salesforce/apex/TechProfile360Controller.getProfileByUnifiedId';
 import getCustomerMetrics from '@salesforce/apex/TechProfile360Controller.getCustomerMetrics';
@@ -48,6 +49,12 @@ export default class TechPatient360Profile extends LightningElement {
     @track isLoading = false;
     @api isUnifiedId = false; 
     unifiedId;
+
+    // Captura de resultados de wire para refresco manual
+    _wiredMedical;
+    _wiredMetrics;
+    _wiredOrders;
+    _wiredAppointments;
     
     // Listas de Datos
     @track orders = [];
@@ -153,7 +160,9 @@ export default class TechPatient360Profile extends LightningElement {
     }
 
     @wire(getOrders, { unifiedId: '$unifiedId' })
-    wiredOrders({ error, data }) {
+    wiredOrders(result) {
+        this._wiredOrders = result;
+        const { error, data } = result;
         if (data) {
             console.log('Real Orders Received:', data);
             this.orders = data.map(order => ({
@@ -171,7 +180,9 @@ export default class TechPatient360Profile extends LightningElement {
     }
 
     @wire(getMedicalInfo, { unifiedId: '$unifiedId' })
-    wiredMedical({ error, data }) {
+    wiredMedical(result) {
+        this._wiredMedical = result;
+        const { error, data } = result;
         if (data) {
             console.log('Medical Data Received:', data);
             this.processMedicalData(data);
@@ -217,17 +228,11 @@ export default class TechPatient360Profile extends LightningElement {
         this.patientData.visualDriver = data.visualDriver || {};
         this.patientData.powerQuestions = data.powerQuestions || {};
 
-        // 4. Familia (Simulado por ahora hasta encontrar DMO de relación)
-        this.patientData.familyRelations = [
-            { idPos: 'FAM-001', name: 'María Pérez (Hija)', isLast: false },
-            { idPos: 'FAM-002', name: 'Roberto Pérez (Hijo)', isLast: true }
-        ];
+        // 4. Familia (Se poblará cuando se encuentre el DMO real)
+        this.patientData.familyRelations = data.familyRelations || [];
 
-        // 5. Graduaciones (Historial simulado)
-        this.patientData.graduations = [
-            { id: 1, fecha: this.lastDiagnosisDate || 'N/A', ojo: 'OD', esfera: '-2.00', cilindro: '-0.50', eje: '10', adicion: '+1.50' },
-            { id: 2, fecha: this.lastDiagnosisDate || 'N/A', ojo: 'OI', esfera: '-2.25', cilindro: '-0.75', eje: '175', adicion: '+1.50' }
-        ];
+        // 5. Graduaciones (Se poblará cuando se encuentre el DMO real)
+        this.patientData.graduations = data.graduations || [];
     }
 
     // Caso 1: Viene de un registro de Salesforce (Account/Contact)
@@ -263,7 +268,9 @@ export default class TechPatient360Profile extends LightningElement {
     }
 
     @wire(getCustomerMetrics, { unifiedId: '$unifiedId' })
-    wiredMetrics({ error, data }) {
+    wiredMetrics(result) {
+        this._wiredMetrics = result;
+        const { error, data } = result;
         if (data) {
             console.log('Metrics Data Received:', data);
             this.patientData = {
@@ -282,6 +289,23 @@ export default class TechPatient360Profile extends LightningElement {
             };
         } else if (error) {
             console.error('Error fetching metrics:', error);
+        }
+    }
+
+    async handleRefresh() {
+        this.isLoading = true;
+        try {
+            await Promise.all([
+                refreshApex(this._wiredMedical),
+                refreshApex(this._wiredMetrics),
+                refreshApex(this._wiredOrders),
+                refreshApex(this._wiredAppointments)
+            ]);
+            console.log('Refresh exitoso');
+        } catch (error) {
+            console.error('Error al refrescar:', error);
+        } finally {
+            this.isLoading = false;
         }
     }
 
@@ -571,6 +595,15 @@ export default class TechPatient360Profile extends LightningElement {
     get hasQuotes() { return this.quotes && this.quotes.length > 0; }
     get hasSubscriptions() { return this.subscriptions && this.subscriptions.length > 0; }
     get hasCampaigns() { return this.campaigns && this.campaigns.length > 0; }
+    get hasVisualDriver() { 
+        return this.patientData.visualDriver && Object.keys(this.patientData.visualDriver).length > 0; 
+    }
+    get hasPowerQuestions() { 
+        return this.patientData.powerQuestions && Object.keys(this.patientData.powerQuestions).length > 0; 
+    }
+    get hasGraduations() {
+        return this.patientData.graduations && this.patientData.graduations.length > 0;
+    }
     
     // ==================== TOGGLE HANDLERS - EXPEDIENTE MÉDICO ====================
     
