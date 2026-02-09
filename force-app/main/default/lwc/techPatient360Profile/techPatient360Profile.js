@@ -165,14 +165,31 @@ export default class TechPatient360Profile extends LightningElement {
         const { error, data } = result;
         if (data) {
             console.log('Real Orders Received:', data);
-            this.orders = data.map(order => ({
-                ...order,
-                fechaCompra: order.fechaCompra ? new Date(order.fechaCompra).toLocaleDateString() : 'N/A',
-                isExpanded: false,
-                chevronIcon: 'utility:chevrondown',
-                chevronClass: 'toggle-icon',
-                detailsClass: 'orden-details collapsed'
-            }));
+            this.orders = data.map(order => {
+                const totalAmount = order.total ? Number(order.total) : 0;
+                const isReturn = totalAmount < 0;
+                return {
+                    ...order,
+                    total: totalAmount.toFixed(2),
+                    fechaCompra: order.fechaCompra ? new Date(order.fechaCompra).toLocaleDateString() : 'N/A',
+                    isExpanded: false,
+                    isReturn: isReturn,
+                    quoteNumber: order.quoteNumber || 'N/A',
+                    discounts: order.discounts || 'Sin descuentos adicionales',
+                    chevronIcon: 'utility:chevrondown',
+                    chevronClass: 'toggle-icon',
+                    detailsClass: 'orden-details collapsed',
+                    productos: (order.productos || []).map(p => {
+                        const pTotal = p.precioTotal ? Number(p.precioTotal) : 0;
+                        const pQty = p.cantidad ? Number(p.cantidad) : 0;
+                        return {
+                            ...p,
+                            precioTotal: pTotal.toFixed(2),
+                            precioUnitario: pQty > 0 ? (pTotal / pQty).toFixed(2) : '0.00'
+                        };
+                    })
+                };
+            });
             this.totalItems = this.orders.length;
         } else if (error) {
             console.error('Error fetching orders:', error);

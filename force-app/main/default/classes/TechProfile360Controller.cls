@@ -229,7 +229,9 @@ public with sharing class TechProfile360Controller {
                 orderMap.put('total', o.get('ssot__TotalAmount__c'));
                 orderMap.put('fechaCompra', o.get('ssot__CreatedDate__c'));
                 orderMap.put('sucursal', storeNames.get((String)o.get('ssot__SalesStoreId__c')) ?? 'Sucursal Desconocida');
-                orderMap.put('status', 'Completado'); // Estatus genérico por ahora
+                
+                // Usamos un valor por defecto ya que el campo de estatus no existe en el DMO
+                orderMap.put('status', 'Completado'); 
                 
                 List<Map<String, Object>> productsList = new List<Map<String, Object>>();
                 for (SObject p : allProducts) {

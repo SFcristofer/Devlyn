@@ -365,15 +365,48 @@
                                             <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
                                                 <div class="orden-title">
                                                     <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
-                                                    <span>Orden Venta: {orden.ordenId}</span>
+                                                    <span>Orden: {orden.ordenId}</span>
+                                                    <template if:true={orden.isReturn}>
+                                                        <span class="return-label">DEVOLUCIÓN</span>
+                                                    </template>
                                                 </div>
                                                 <div class="orden-meta">
+                                                    <span class="status-badge">{orden.status}</span>
+                                                    <span>Sucursal: {orden.sucursal}</span>
                                                     <span>Total: ${orden.total}</span>
-                                                    <span>Fecha Compra: {orden.fechaCompra}</span>
+                                                    <span>Fecha: {orden.fechaCompra}</span>
                                                     <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
                                                 </div>
                                             </div>
-                                            <!-- ... resto del contenido ... -->
+                                            
+                                            <div class={orden.detailsClass}>
+                                                <div class="orden-info-row">
+                                                    <span><strong>Cotización vinculada:</strong> {orden.quoteNumber}</span>
+                                                    <span><strong>Canal:</strong> {orden.sucursal}</span>
+                                                </div>
+                                                
+                                                <template for:each={orden.productos} for:item="producto">
+                                                    <div key={producto.sku} class="producto-item">
+                                                        <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
+                                                        <div class="producto-details">
+                                                            <div class="producto-name">{producto.nombre}</div>
+                                                            <div class="producto-info">
+                                                                <span>SKU: {producto.sku}</span>
+                                                                <span>Cantidad: {producto.cantidad}</span>
+                                                                <span>Precio Unit: ${producto.precioUnitario}</span>
+                                                            </div>
+                                                            <div class="producto-pricing">
+                                                                <span>Subtotal: ${producto.precioTotal}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+
+                                                <div class="discount-section">
+                                                    <lightning-icon icon-name="utility: privileg" size="xx-small"></lightning-icon>
+                                                    <span><strong>Descuentos aplicados:</strong> {orden.discounts}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                 </template>
