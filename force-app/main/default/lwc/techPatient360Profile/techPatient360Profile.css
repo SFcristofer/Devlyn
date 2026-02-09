@@ -538,6 +538,16 @@
     gap: 0.5rem;
 }
 
+.status-badge-blue {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 .status-badge {
     background: #dcfce7;
     color: #166534;

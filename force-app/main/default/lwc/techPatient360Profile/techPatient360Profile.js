@@ -133,13 +133,16 @@ export default class TechPatient360Profile extends LightningElement {
     }
 
     @wire(getAppointments, { unifiedId: '$unifiedId' })
-    wiredAppointments({ error, data }) {
+    wiredAppointments(result) {
+        this._wiredAppointments = result;
+        const { error, data } = result;
         if (data) {
             console.log('Appointments Received:', data);
             this.appointments = data.map(cita => ({
                 ...cita,
-                inicio: cita.inicio ? new Date(cita.inicio).toLocaleString() : 'N/A',
-                fin: cita.fin ? new Date(cita.fin).toLocaleString() : 'N/A'
+                inicio: cita.inicio ? new Date(cita.inicio).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A',
+                fin: cita.fin ? new Date(cita.fin).toLocaleTimeString([], { timeStyle: 'short' }) : 'N/A',
+                status: cita.status || 'Programada'
             }));
         } else if (error) {
             console.error('Error fetching appointments:', error);

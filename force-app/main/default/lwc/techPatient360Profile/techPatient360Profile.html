@@ -425,25 +425,27 @@
                         <div class="tab-content-wrapper">
                             <template if:true={hasAppointments}>
                                 <template for:each={appointments} for:item="cita">
-                                    <div key={cita.citaId} class="cita-card">
+                                    <div key={cita.citaId} class="cita-card slds-m-bottom_small">
                                         <div class="cita-header">
                                             <div class="cita-info">
                                                 <lightning-icon icon-name="utility:event" size="small"></lightning-icon>
                                                 <div>
-                                                    <span class="cita-number">Cita: {cita.citaId}</span>
-                                                    <span class="cita-type">Tipo: {cita.tipo}</span>
-                                                    <span class="cita-status">Estatus: {cita.status}</span>
+                                                    <div class="slds-flex slds-grid_align-spread">
+                                                        <span class="cita-number">Cita: {cita.citaId}</span>
+                                                        <span class="status-badge-blue">{cita.status}</span>
+                                                    </div>
+                                                    <span class="cita-type">{cita.tipo}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="cita-details">
-                                            <div class="cita-row">
-                                                <span>Sucursal: {cita.sucursal}</span>
-                                                <span>Inicio: {cita.inicio}</span>
-                                                <span>Fin: {cita.fin}</span>
-                                            </div>
-                                            <div class="cita-created">
-                                                Creada: {cita.creada}
+                                        <div class="cita-details slds-m-top_small">
+                                            <div class="info-grid">
+                                                <div class="info-item">
+                                                    <strong>Sucursal:</strong> {cita.sucursal}
+                                                </div>
+                                                <div class="info-item">
+                                                    <strong>Horario:</strong> {cita.inicio} - {cita.fin}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
