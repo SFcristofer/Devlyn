@@ -163,13 +163,23 @@ export default class TechPatient360Profile extends LightningElement {
         this._wiredAppointments = result;
         const { error, data } = result;
         if (data) {
-            console.log('Appointments Received:', data);
             this.appointments = data.map(cita => ({
                 ...cita,
                 inicio: cita.inicio ? new Date(cita.inicio).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A',
                 fin: cita.fin ? new Date(cita.fin).toLocaleTimeString([], { timeStyle: 'short' }) : 'N/A',
                 status: cita.status || 'Programada'
             }));
+
+            // Requerimiento: Fecha del último examen de la vista (Cita con estatus "Completado")
+            const completedAppts = data
+                .filter(a => a.status === 'Completado' || a.status === 'Completed' || a.status === 'Atendido')
+                .sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+            
+            if (completedAppts.length > 0) {
+                this.lastExamDate = new Date(completedAppts[0].inicio).toLocaleDateString();
+            } else {
+                this.lastExamDate = 'Sin exámenes completados';
+            }
         } else if (error) {
             console.error('Error fetching appointments:', error);
         }
@@ -179,6 +189,31 @@ export default class TechPatient360Profile extends LightningElement {
     _wiredSubscriptions;
     _wiredMarketingHistory;
     _wiredMarketingScores;
+
+    // Lógica para Graduaciones por Producto (SKU)
+    @track selectedSku = '';
+    @track graduationOptions = [];
+    @track filteredGraduations = [];
+
+    handleSkuChange(event) {
+        this.selectedSku = event.detail.value;
+        this.filterGraduations();
+    }
+
+    filterGraduations() {
+        if (this.selectedSku && this.patientData.graduations) {
+            this.filteredGraduations = this.patientData.graduations.filter(g => g.sku === this.selectedSku);
+        } else {
+            this.filteredGraduations = [];
+        }
+    }
+
+    // Lógica para Familia
+    handleOpenFamilyProfile(event) {
+        const idPos = event.target.dataset.id;
+        const url = `/lightning/n/Tech_Patient_360?c__idPos=${idPos}`;
+        window.open(url, '_blank');
+    }
 
     async handleRefresh() {
         this.isLoading = true;
@@ -391,11 +426,26 @@ export default class TechPatient360Profile extends LightningElement {
         this.patientData.visualDriver = data.visualDriver || {};
         this.patientData.powerQuestions = data.powerQuestions || {};
 
-        // 4. Familia (Se poblará cuando se encuentre el DMO real)
-        this.patientData.familyRelations = data.familyRelations || [];
+        // 4. Familia con Roles (Padre/Hijo)
+        this.patientData.familyRelations = (data.familyRelations || []).map(member => ({
+            ...member,
+            role: member.isParent ? 'Padre/Tutor' : 'Dependiente/Hijo',
+            icon: member.isParent ? 'standard:user' : 'standard:avatar'
+        }));
 
-        // 5. Graduaciones (Se poblará cuando se encuentre el DMO real)
-        this.patientData.graduations = data.graduations || [];
+        // 5. Graduaciones por SKU
+        if (data.graduations && data.graduations.length > 0) {
+            this.patientData.graduations = data.graduations;
+            const skus = [...new Set(data.graduations.map(g => g.sku))];
+            this.graduationOptions = skus.map(sku => ({ label: `Producto: ${sku}`, value: sku }));
+            if (skus.length > 0) {
+                this.selectedSku = skus[0];
+                this.filterGraduations();
+            }
+        } else {
+            this.patientData.graduations = [];
+            this.graduationOptions = [];
+        }
     }
 
     // Caso 1: Viene de un registro de Salesforce (Account/Contact)

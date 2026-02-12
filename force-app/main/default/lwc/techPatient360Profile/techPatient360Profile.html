@@ -295,7 +295,35 @@
                                 </div>
                                 <div class={graduacionesContentClass}>
                                     <template if:true={hasGraduations}>
-                                        <table class="graduacion-table">
+                                        <div class="slds-m-bottom_medium">
+                                            <lightning-combobox
+                                                name="skuSelector"
+                                                label="Seleccionar Producto (SKU)"
+                                                value={selectedSku}
+                                                placeholder="Seleccione un SKU"
+                                                options={graduationOptions}
+                                                onchange={handleSkuChange}>
+                                            </lightning-combobox>
+                                        </div>
+
+                                        <!-- Gráfica Cronológica (Simulada con SVG dinámico) -->
+                                        <div class="chart-container">
+                                            <h4 class="chart-title">Evolución Óptica: {selectedSku}</h4>
+                                            <div class="visual-chart">
+                                                <!-- Aquí renderizamos los puntos en el tiempo -->
+                                                <template for:each={filteredGraduations} for:item="grad">
+                                                    <div key={grad.id} class="chart-point-wrapper">
+                                                        <div class="chart-point" title={grad.fecha}></div>
+                                                        <div class="chart-label">{grad.fecha}</div>
+                                                        <div class="chart-values">
+                                                            ESF: {grad.esfera} | CIL: {grad.cilindro}
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <table class="graduacion-table slds-m-top_medium">
                                             <thead>
                                                 <tr>
                                                     <th>Fecha</th>
@@ -307,7 +335,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <template for:each={patientData.graduations} for:item="grad">
+                                                <template for:each={filteredGraduations} for:item="grad">
                                                     <tr key={grad.id}>
                                                         <td>{grad.fecha}</td>
                                                         <td>{grad.ojo}</td>
@@ -334,20 +362,28 @@
                                     <lightning-icon icon-name={familiaIcon} size="x-small" class={familiaIconClass}></lightning-icon>
                                 </div>
                                 <div class={familiaContentClass}>
-                                    <template for:each={patientData.familyRelations} for:item="member">
-                                        <div key={member.idPos} class="family-member">
-                                            <div class="family-info">
-                                                <lightning-icon icon-name="standard:avatar" size="small"></lightning-icon>
-                                                <div class="family-details">
-                                                    <span class="family-name">Nombre: {member.name}</span>
-                                                    <span class="family-id">ID POS: {member.idPos}</span>
+                                    <template if:true={patientData.familyRelations.length}>
+                                        <template for:each={patientData.familyRelations} for:item="member">
+                                            <div key={member.idPos} class="family-member">
+                                                <div class="family-info">
+                                                    <lightning-icon icon-name={member.icon} size="small"></lightning-icon>
+                                                    <div class="family-details">
+                                                        <span class="family-name">{member.name}</span>
+                                                        <span class="family-role">{member.role} (ID: {member.idPos})</span>
+                                                    </div>
                                                 </div>
+                                                <lightning-button 
+                                                    label="Abrir Perfil" 
+                                                    variant="brand-outline" 
+                                                    size="small"
+                                                    data-id={member.idPos}
+                                                    onclick={handleOpenFamilyProfile}>
+                                                </lightning-button>
                                             </div>
-                                            <lightning-button label="Ver Perfil" variant="brand" class="profile-btn"></lightning-button>
-                                            <template if:false={member.isLast}>
-                                                <div class="family-divider"></div>
-                                            </template>
-                                        </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={patientData.familyRelations.length}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No se encontraron perfiles familiares vinculados.</p>
                                     </template>
                                 </div>
                             </div>

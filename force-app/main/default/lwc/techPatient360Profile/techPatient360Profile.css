@@ -1015,6 +1015,77 @@
     margin-right: 0.5rem;
 }
 
+/* ========== GRADUACIONES Y GRÁFICA ========== */
+.chart-container {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.chart-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+}
+
+.visual-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 120px;
+    padding: 0 2rem;
+    position: relative;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.chart-point-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.chart-point {
+    width: 12px;
+    height: 12px;
+    background: var(--brand-color);
+    border-radius: 50%;
+    margin-bottom: 8px;
+    box-shadow: 0 0 0 4px rgba(1, 118, 211, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.chart-point:hover {
+    transform: scale(1.5);
+}
+
+.chart-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.chart-values {
+    font-size: 0.65rem;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+/* ========== FAMILIA ========== */
+.family-role {
+    font-size: 0.75rem;
+    color: var(--brand-color);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     :host {
