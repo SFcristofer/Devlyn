@@ -352,6 +352,36 @@ public with sharing class TechProfile360Controller {
     }
 
     /**
+     * @description Busca perfiles unificados filtrando por múltiples atributos simultáneamente (Global Search).
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<UnifiedssotIndividualDev2__dlm> searchProfilesGlobal(String searchTerm) {
+        if (String.isBlank(searchTerm)) {
+            return new List<UnifiedssotIndividualDev2__dlm>();
+        }
+        
+        if (Test.isRunningTest() && forceException) throw new IllegalArgumentException('Forced');
+
+        String queryTerm = '%' + searchTerm + '%';
+        
+        // Buscamos en todos los campos relevantes a la vez (Global Search)
+        String sql = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, ssot__GenderId__c ' +
+                     'FROM UnifiedssotIndividualDev2__dlm ' +
+                     'WHERE ssot__FirstName__c LIKE :queryTerm ' +
+                     'OR ssot__LastName__c LIKE :queryTerm ' +
+                     'OR Email__c LIKE :queryTerm ' +
+                     'OR Id_POS__c LIKE :queryTerm ' +
+                     'LIMIT 20';
+        
+        try {
+            return (Test.isRunningTest() && mockProfiles != null) ? mockProfiles : Database.query(sql);
+        } catch (Exception e) {
+            System.debug('Global Search error: ' + e.getMessage());
+            return new List<UnifiedssotIndividualDev2__dlm>();
+        }
+    }
+
+    /**
      * @description Busca perfiles unificados filtrando por un atributo específico (Estilo Profile Explorer).
      */
     @AuraEnabled(cacheable=true)

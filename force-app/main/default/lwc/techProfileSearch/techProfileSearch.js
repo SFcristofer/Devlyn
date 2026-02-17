@@ -1,5 +1,5 @@
 import { LightningElement, track } from 'lwc';
-import searchProfiles from '@salesforce/apex/TechProfile360Controller.searchProfiles';
+import searchProfilesGlobal from '@salesforce/apex/TechProfile360Controller.searchProfilesGlobal';
 
 const COLUMNS = [
     { label: 'Name', fieldName: 'ssot__FirstName__c', type: 'text' },
@@ -9,56 +9,20 @@ const COLUMNS = [
 ];
 
 export default class TechProfileSearch extends LightningElement {
-    @track selectedDataSpace = 'default';
-    @track selectedObject = '';
-    @track selectedAttribute = '';
     @track searchTerm = '';
     @track searchResults = [];
     @track isSearching = false;
     columns = COLUMNS;
-
-    // Opciones para los Comboboxes
-    dataSpaceOptions = [{ label: 'default', value: 'default' }];
-    
-    objectOptions = [
-        { label: 'Unified Individual', value: 'UnifiedIndividual' }
-    ];
-
-    attributeOptionsMap = {
-        'UnifiedIndividual': [
-            { label: 'First Name', value: 'ssot__FirstName__c' },
-            { label: 'Last Name', value: 'ssot__LastName__c' },
-            { label: 'Email', value: 'Email__c' },
-            { label: 'ID POS', value: 'Id_POS__c' }
-        ]
-    };
-
-    @track attributeOptions = [];
-
-    handleDataSpaceChange(event) {
-        this.selectedDataSpace = event.detail.value;
-    }
-
-    handleObjectChange(event) {
-        this.selectedObject = event.detail.value;
-        this.attributeOptions = this.attributeOptionsMap[this.selectedObject] || [];
-        this.selectedAttribute = ''; // Reset attribute when object changes
-    }
-
-    handleAttributeChange(event) {
-        this.selectedAttribute = event.detail.value;
-    }
 
     handleSearchChange(event) {
         this.searchTerm = event.target.value;
     }
 
     handleSearchAction() {
-        if (this.selectedAttribute && this.searchTerm) {
+        if (this.searchTerm && this.searchTerm.length >= 2) {
             this.isSearching = true;
-            searchProfiles({ 
-                searchTerm: this.searchTerm, 
-                attributePath: this.selectedAttribute 
+            searchProfilesGlobal({ 
+                searchTerm: this.searchTerm
             })
                 .then(result => {
                     this.searchResults = result;
@@ -81,12 +45,8 @@ export default class TechProfileSearch extends LightningElement {
         }
     }
 
-    get isAttributeDisabled() {
-        return !this.selectedObject;
-    }
-
     get isSearchDisabled() {
-        return !this.selectedAttribute;
+        return !this.searchTerm || this.searchTerm.length < 2;
     }
 
     get hasResults() {
@@ -94,6 +54,6 @@ export default class TechProfileSearch extends LightningElement {
     }
 
     get noResults() {
-        return this.selectedAttribute && this.searchTerm && !this.isSearching && this.searchResults.length === 0;
+        return this.searchTerm && !this.isSearching && this.searchResults.length === 0;
     }
 }

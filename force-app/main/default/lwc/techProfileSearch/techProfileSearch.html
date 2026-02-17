@@ -7,62 +7,29 @@
         
         <div class="search-content">
             
-            <!-- Flujo de Selección Estilo Data Cloud -->
-            <div class="search-filters">
-                <div class="filter-item">
-                    <lightning-combobox
-                        label="Select Data Space"
-                        value={selectedDataSpace}
-                        options={dataSpaceOptions}
-                        onchange={handleDataSpaceChange}
-                        placeholder="default"
-                        class="custom-combobox">
-                    </lightning-combobox>
+            <!-- Búsqueda Inteligente Global -->
+            <div class="search-box-container">
+                <div class="search-input-wrapper">
+                    <lightning-input 
+                        type="search" 
+                        label="Patient Search"
+                        placeholder="Search by Name, Email, POS ID or Code..." 
+                        onchange={handleSearchChange}
+                        oncommit={handleSearchAction}
+                        value={searchTerm}
+                        class="custom-search-input">
+                    </lightning-input>
                 </div>
-                <div class="filter-item">
-                    <lightning-combobox
-                        label="Select an option"
-                        value={selectedObject}
-                        options={objectOptions}
-                        onchange={handleObjectChange}
-                        placeholder="Select Object"
-                        class="custom-combobox">
-                    </lightning-combobox>
+                <div class="search-button-container">
+                    <lightning-button 
+                        label="Search Profiles" 
+                        variant="brand" 
+                        onclick={handleSearchAction} 
+                        disabled={isSearchDisabled}
+                        icon-name="utility:search"
+                        class="search-button">
+                    </lightning-button>
                 </div>
-                <div class="filter-item">
-                    <lightning-combobox
-                        label="Select attribute"
-                        value={selectedAttribute}
-                        options={attributeOptions}
-                        onchange={handleAttributeChange}
-                        disabled={isAttributeDisabled}
-                        placeholder="Select Attribute"
-                        class="custom-combobox">
-                    </lightning-combobox>
-                </div>
-                <div class="filter-item">
-                    <div class="search-input-wrapper">
-                        <lightning-input 
-                            type="search" 
-                            label="Search value"
-                            placeholder="Enter search value..." 
-                            onchange={handleSearchChange}
-                            value={searchTerm}
-                            disabled={isSearchDisabled}
-                            class="custom-search-input">
-                        </lightning-input>
-                    </div>
-                </div>
-            </div>
-
-            <div class="search-button-container">
-                <lightning-button 
-                    label="Search" 
-                    variant="brand" 
-                    onclick={handleSearchAction} 
-                    disabled={isSearchDisabled}
-                    class="search-button">
-                </lightning-button>
             </div>
 
             <!-- Tabla de Resultados -->

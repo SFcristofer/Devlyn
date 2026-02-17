@@ -1,0 +1,78 @@
+==========================================================================
+DOCUMENTACIÓN TÉCNICA: CONSULTAS DATA CLOUD - PROYECTO TECHPROFILE360
+==========================================================================
+Fecha: 12 de Febrero de 2026
+Destinatario: Equipo Mulesoft / Arquitectura de Datos
+Contexto: Integración de Vistas 360 de Pacientes (Unified Profiles)
+--------------------------------------------------------------------------
+
+1. BÚSQUEDA GLOBAL DE PACIENTES (Unified Search)
+--------------------------------------------------
+* Método: searchProfilesGlobal
+* Objeto DMO: UnifiedssotIndividualDev2__dlm
+* Propósito: Localizar un perfil unificado basado en criterios parciales.
+* Query:
+    SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
+    FROM UnifiedssotIndividualDev2__dlm 
+    WHERE ssot__FirstName__c LIKE :term 
+       OR ssot__LastName__c LIKE :term 
+       OR Email__c LIKE :term 
+       OR Id_POS__c LIKE :term
+* Retorno: Lista de perfiles con ID Unificado, Nombre, Email e ID del sistema POS.
+
+2. HISTORIAL MÉDICO Y CLÍNICO (Clinical Data)
+-----------------------------------------------
+Este bloque consulta múltiples tablas de origen POS mapeadas en Data Cloud.
+
+A) Antecedentes Médicos:
+   - DMO: POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm
+   - Campos: ARDOR_IRRITACION__c, COMEZON__c, DIABETES__c, HIPERTENSION__c, INFECCION__c, LAGRIMEO__c, LEGANA__c, VISION_BORROSA__c, RESEQUEDAD_OCULAR__c, NOTAS__c.
+
+B) Driver Visual:
+   - DMO: POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm
+   - Campos: NIVEL_VISION__c, TIPO_USUARIO__c, SOLUCION_VISUAL_BUSCA__c, VALOR_RAZON_VISITA__c.
+
+C) Preguntas de Poder:
+   - DMO: POS_POS_CLIENTE_PREG_PODER__dlm
+   - Campos: ACTIVIDAD_AIRE_LIBRE__c, PROTEGE_SUS_OJOS__c, NECESIDAD_PROTECCION__c.
+
+D) Último Diagnóstico:
+   - DMO: POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm
+   - Campos: ASTIGMATISMO__c, HIPERMETROPIA__c, MIOPIA__c, PRESBICIA__c.
+
+3. ÓRDENES Y VENTAS (Sales & Retail)
+--------------------------------------
+* Objetos DMO: 
+    - ssot__SalesOrder__dlm (Cabecera)
+    - ssot__SalesOrderProduct__dlm (Detalle)
+    - ssot__SalesStore__dlm (Sucursales)
+* Lógica: Se filtran las órdenes donde 'ssot__SoldToCustomerId__c' coincide con el 'Id_POS__c' del perfil unificado.
+* Campos Clave: OrderNumber, TotalAmount, CreatedDate, ProductId, Description, OrderedQuantity.
+
+4. CITAS Y AGENDAMIENTO (Appointments)
+----------------------------------------
+* Objeto DMO: TUOTEMPO_CITA__dlm
+* Filtro: memberid__c (Mapeado con Id_TuoTempo__c del perfil).
+* Campos: start_date__c, end_date__c, activityTitle__c (Tipo de cita), areaTitle__c (Sucursal), estatus_cita__c.
+
+5. MARKETING ENGAGEMENT & SCORES
+----------------------------------
+* Engagement: ssot__EmailEngagement__dlm (Aperturas y Clics de Marketing Cloud).
+* RFM Insights (Calculated Insights):
+    - RFM_Retail_Solar__cio
+    - RFM_Retail_LC__cio
+    - RFM_Retail_Oftalmicos__cio
+* Campos: score__c, label__c (Segmento al que pertenece el cliente).
+
+6. SUSCRIPCIONES (VTEX)
+-------------------------
+* Objeto DMO: VTEX_Subscription__dlm
+* Filtro: CustomerId__c (Mapeado con Id_POS__c).
+* Campos: Status__c, NextPurchaseDate__c.
+
+--------------------------------------------------------------------------
+NOTAS PARA MULESOFT:
+- Todas las consultas utilizan el ID Unificado (UnifiedId) como llave principal para el filtrado inicial.
+- Los objetos terminados en "__dlm" son Data Model Objects (Data Cloud).
+- Los objetos terminados en "__cio" son Calculated Insights (Data Cloud).
+==========================================================================
