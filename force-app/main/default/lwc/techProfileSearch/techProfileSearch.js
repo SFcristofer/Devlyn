@@ -22,7 +22,7 @@ export default class TechProfileSearch extends LightningElement {
         if (this.searchTerm && this.searchTerm.length >= 2) {
             this.isSearching = true;
             searchProfilesGlobal({ 
-                searchTerm: this.searchTerm
+                term: this.searchTerm
             })
                 .then(result => {
                     this.searchResults = result;

@@ -1,34 +1,33 @@
-String targetId = '11472417';
-String searchWildcard = '%' + targetId + '%';
 try {
-    System.debug('--- AUDITORÍA DE DATOS REALES PARA HORACIO ---');
+    String quoteId = '8200424';
+    String dmo = 'POS_POS_CLIENTE_PRESUPUESTO_70871439__dlm';
     
-    // 1. Rastreamos el ID en las tablas de Engagement
-    String[] engagementObjects = new String[]{'ssot__EmailEngagement__dlm', 'ssot__IndividualEngagement__dlm'};
-    for(String obj : engagementObjects) {
-        try {
-            String q = 'SELECT ssot__IndividualId__c, ssot__SubjectLineTxt__c FROM ' + obj + ' WHERE ssot__IndividualId__c = :targetId OR ssot__IndividualId__c LIKE :searchWildcard LIMIT 5';
-            List<SObject> results = Database.query(q);
-            if(!results.isEmpty()) {
-                System.debug('¡DATOS ENCONTRADOS EN ' + obj + '!');
-                for(SObject s : results) System.debug(' - Registro: ' + JSON.serialize(s));
-            }
-        } catch(Exception e) {}
+    System.debug('--- AUDITORIA DE DATOS: PRESUPUESTO ' + quoteId + ' ---');
+    
+    // Consultamos el registro sin filtrar por ID de cliente, sino por el ID del presupuesto mismo
+    // Probamos con ID_PRESUPUESTO__c
+    String q = 'SELECT ID_PRESUPUESTO__c, ID_CLIENTE__c, TOTAL__c, FECHA__c FROM ' + dmo + ' WHERE ID_PRESUPUESTO__c = \'' + quoteId + '\' LIMIT 1';
+    
+    List<SObject> results = Database.query(q);
+    
+    if(results.isEmpty()) {
+        System.debug('RESULTADO: No se encontró el ID ' + quoteId + ' en el campo ID_PRESUPUESTO__c del DMO ' + dmo);
+        
+        // Intento 2: Buscar en todos los registros para ver cómo vienen los IDs
+        System.debug('--- BUSCANDO FORMATO DE DATOS EN LOS PRIMEROS 5 REGISTROS ---');
+        String q2 = 'SELECT ID_PRESUPUESTO__c, ID_CLIENTE__c, TOTAL__c, FECHA__c FROM ' + dmo + ' LIMIT 5';
+        List<SObject> samples = Database.query(q2);
+        for(SObject s : samples) {
+            System.debug('MUESTRA: ID_PRESU=' + s.get('ID_PRESUPUESTO__c') + ' | ID_CLI=' + s.get('ID_CLIENTE__c') + ' | TOTAL=' + s.get('TOTAL__c'));
+        }
+    } else {
+        SObject r = results[0];
+        System.debug('¡REGISTRO ENCONTRADO!');
+        System.debug('ID_PRESUPUESTO__c: ' + r.get('ID_PRESUPUESTO__c'));
+        System.debug('ID_CLIENTE__c: ' + r.get('ID_CLIENTE__c'));
+        System.debug('TOTAL__c: ' + r.get('TOTAL__c'));
+        System.debug('FECHA__c: ' + r.get('FECHA__c'));
     }
-
-    // 2. Rastreamos el ID en las tablas de RFM (Lealtad)
-    String[] rfmObjects = new String[]{'RFM_Retail_Solar__cio', 'RFM_Retail_Oftalmicos__cio', 'RFM_Retail_LC__cio'};
-    for(String obj : rfmObjects) {
-        try {
-            String q = 'SELECT unified_individual_id__c, score__c, label__c FROM ' + obj + ' WHERE unified_individual_id__c = :targetId OR unified_individual_id__c LIKE :searchWildcard LIMIT 1';
-            List<SObject> results = Database.query(q);
-            if(!results.isEmpty()) {
-                System.debug('¡RFM ENCONTRADO EN ' + obj + '!');
-                System.debug(' - Detalle: ' + JSON.serialize(results[0]));
-            }
-        } catch(Exception e) {}
-    }
-
 } catch(Exception e) {
-    System.debug('ERROR GENERAL: ' + e.getMessage());
+    System.debug('ERROR EN AUDITORIA: ' + e.getMessage());
 }

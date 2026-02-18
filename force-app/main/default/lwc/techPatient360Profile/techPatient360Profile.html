@@ -382,7 +382,7 @@
                                             </div>
                                         </template>
                                     </template>
-                                    <template if:false={patientData.familyRelations.length}>
+                                    <template if:false={hasFamilyRelations}>
                                         <p class="slds-text-color_weak slds-p-around_small">No se encontraron perfiles familiares vinculados.</p>
                                     </template>
                                 </div>
@@ -401,23 +401,18 @@
                                             <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
                                                 <div class="orden-title">
                                                     <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
-                                                    <span>Orden: {orden.ordenId}</span>
-                                                    <template if:true={orden.isReturn}>
-                                                        <span class="return-label">DEVOLUCIÓN</span>
-                                                    </template>
+                                                    <span>Número de orden: {orden.ordenId}</span>
                                                 </div>
                                                 <div class="orden-meta">
                                                     <span class="status-badge">{orden.status}</span>
-                                                    <span>Sucursal: {orden.sucursal}</span>
-                                                    <span>Total: ${orden.total}</span>
-                                                    <span>Fecha: {orden.fechaCompra}</span>
+                                                    <span>Fecha: {orden.fechaCompraFormatted}</span>
+                                                    <span class="total-amount">Total: {orden.totalFormatted}</span>
                                                     <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
                                                 </div>
                                             </div>
                                             
                                             <div class={orden.detailsClass}>
                                                 <div class="orden-info-row">
-                                                    <span><strong>Cotización vinculada:</strong> {orden.quoteNumber}</span>
                                                     <span><strong>Canal:</strong> {orden.sucursal}</span>
                                                 </div>
                                                 
@@ -427,21 +422,13 @@
                                                         <div class="producto-details">
                                                             <div class="producto-name">{producto.nombre}</div>
                                                             <div class="producto-info">
-                                                                <span>SKU: {producto.sku}</span>
-                                                                <span>Cantidad: {producto.cantidad}</span>
-                                                                <span>Precio Unit: ${producto.precioUnitario}</span>
-                                                            </div>
-                                                            <div class="producto-pricing">
-                                                                <span>Subtotal: ${producto.precioTotal}</span>
+                                                                <span><strong>SKU:</strong> {producto.sku}</span>
+                                                                <span><strong>Cantidad:</strong> {producto.cantidad}</span>
+                                                                <span><strong>Precio:</strong> {producto.precioTotalFormatted}</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </template>
-
-                                                <div class="discount-section">
-                                                    <lightning-icon icon-name="utility: privileg" size="xx-small"></lightning-icon>
-                                                    <span><strong>Descuentos aplicados:</strong> {orden.discounts}</span>
-                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -505,19 +492,19 @@
                                         <div class="cotizacion-header" data-id={quote.presupuestoId} onclick={toggleCotizacion}>
                                             <div class="orden-title">
                                                 <lightning-icon icon-name="utility:quote" size="small"></lightning-icon>
-                                                <span>Presupuesto: {quote.presupuestoId}</span>
+                                                <span>Número de presupuesto: {quote.presupuestoId}</span>
                                             </div>
                                             <div class="orden-meta">
                                                 <span class="status-badge-blue">{quote.status}</span>
-                                                <span>Total: ${quote.total}</span>
                                                 <span>Fecha: {quote.fecha}</span>
+                                                <span>Expira: {quote.fechaExpiracion}</span>
+                                                <span class="total-amount">Total: {quote.total}</span>
                                                 <lightning-icon icon-name={quote.chevronIcon} size="x-small" class={quote.chevronClass}></lightning-icon>
                                             </div>
                                         </div>
                                         
                                         <div class={quote.productosClass}>
                                             <div class="orden-info-row">
-                                                <span><strong>Válido hasta:</strong> {quote.fechaExpiracion}</span>
                                                 <span><strong>Sucursal:</strong> {quote.sucursal}</span>
                                             </div>
                                             
@@ -527,11 +514,9 @@
                                                     <div class="producto-details">
                                                         <div class="producto-name">{producto.nombre}</div>
                                                         <div class="producto-info">
-                                                            <span>SKU: {producto.sku}</span>
-                                                            <span>Cantidad: {producto.cantidad}</span>
-                                                        </div>
-                                                        <div class="producto-pricing">
-                                                            <span>Precio Total: ${producto.precioTotal}</span>
+                                                            <span><strong>SKU:</strong> {producto.sku}</span>
+                                                            <span><strong>Cantidad:</strong> {producto.cantidad}</span>
+                                                            <span><strong>Precio:</strong> {producto.precioTotalFormatted}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -625,33 +610,48 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- RFM Scores -->
-                                    <div class="rfm-section">
-                                        <div class="rfm-channel">
-                                            <div class="rfm-title">RFM RETAIL</div>
-                                            <div class="rfm-badges">
-                                                <span class="rfm-badge">SOL: {rfmRetail.solares}</span>
-                                                <span class="rfm-badge">LC: {rfmRetail.lentesContacto}</span>
-                                                <span class="rfm-badge">OFT: {rfmRetail.oftalmicos}</span>
+                                    <!-- RFM Scores (Resumen de compras - Estilo Barra Lateral) -->
+                                    <div class="rfm-summary-container">
+                                        <div class="score-title">RESUMEN DE COMPRAS POR CANAL</div>
+                                        <div class="rfm-grid">
+                                            <!-- Bloque RETAIL -->
+                                            <div class="channel-block-tab">
+                                                <div class="channel-header-tab">RETAIL</div>
+                                                <div class="channel-badges-tab">
+                                                    <span class="category-badge-tab">SOL: {patientData.retailCategories.Solares}</span>
+                                                    <span class="category-badge-tab">LC: {patientData.retailCategories.LentesContacto}</span>
+                                                    <span class="category-badge-tab">OFT: {patientData.retailCategories.Oftalmicos}</span>
+                                                </div>
+                                                <div class="metric-card-tab">
+                                                    <div class="metric-left-tab">
+                                                        <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
+                                                        <span>Total de Ventas</span>
+                                                    </div>
+                                                    <div class="metric-separator-tab">|</div>
+                                                    <div class="metric-value-tab">
+                                                        <lightning-formatted-number value={patientData.retailTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="rfm-labels">
-                                                <span>{rfmRetail.solaresLabel}</span>
-                                                <span>{rfmRetail.lentesContactoLabel}</span>
-                                                <span>{rfmRetail.oftalmicosLabel}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="rfm-channel">
-                                            <div class="rfm-title">RFM ECOMMERCE</div>
-                                            <div class="rfm-badges">
-                                                <span class="rfm-badge">SOL: {rfmEcommerce.solares}</span>
-                                                <span class="rfm-badge">LC: {rfmEcommerce.lentesContacto}</span>
-                                                <span class="rfm-badge">OFT: {rfmEcommerce.oftalmicos}</span>
-                                            </div>
-                                            <div class="rfm-labels">
-                                                <span>{rfmEcommerce.solaresLabel}</span>
-                                                <span>{rfmEcommerce.lentesContactoLabel}</span>
-                                                <span>{rfmEcommerce.oftalmicosLabel}</span>
+
+                                            <!-- Bloque ECOMMERCE -->
+                                            <div class="channel-block-tab">
+                                                <div class="channel-header-tab">ECOMMERCE</div>
+                                                <div class="channel-badges-tab">
+                                                    <span class="category-badge-tab">SOL: {patientData.ecommerceCategories.Solares}</span>
+                                                    <span class="category-badge-tab">LC: {patientData.ecommerceCategories.LentesContacto}</span>
+                                                    <span class="category-badge-tab">OFT: {patientData.ecommerceCategories.Oftalmicos}</span>
+                                                </div>
+                                                <div class="metric-card-tab">
+                                                    <div class="metric-left-tab">
+                                                        <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
+                                                        <span>Total de Ventas</span>
+                                                    </div>
+                                                    <div class="metric-separator-tab">|</div>
+                                                    <div class="metric-value-tab">
+                                                        <lightning-formatted-number value={patientData.ecommerceTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

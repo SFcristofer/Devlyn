@@ -1,8 +1,9 @@
-Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
-List<String> dmos = new List<String>();
-for(String sObj : gd.keySet()){
-    if(sObj.contains('__dlm')){
-        dmos.add(sObj);
+try {
+    System.debug('--- BUSCANDO TODOS LOS DMOs ---');
+    String[] targets = new String[]{'%GRAD%', '%FAM%', '%RELATION%', '%PHONE%', '%EXAM%'};
+    for(String t : targets) {
+        for(SObject e : Database.query('SELECT QualifiedApiName FROM EntityDefinition WHERE QualifiedApiName LIKE \''+t+'\' AND QualifiedApiName LIKE \'%__dlm\'')) {
+            System.debug('DMO DETECTADO: ' + e.get('QualifiedApiName'));
+        }
     }
-}
-System.debug('ALL_DMOS: ' + String.join(dmos, ', '));
+} catch(Exception e) { System.debug('Error: ' + e.getMessage()); }

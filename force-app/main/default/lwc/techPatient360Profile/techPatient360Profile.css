@@ -1086,6 +1086,155 @@
     text-transform: uppercase;
 }
 
+/* ========== HISTORIAL DE SEGMENTACIÓN (NUEVO) ========== */
+.rfm-history-section {
+    border: 2px solid var(--capsule-border);
+    background: var(--capsule-bg);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.rfm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.rfm-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease;
+}
+
+.rfm-history-item:hover {
+    transform: translateX(5px);
+    border-color: var(--primary-color);
+}
+
+.rfm-item-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rfm-icon {
+    --slds-c-icon-color-foreground: var(--primary-color);
+}
+
+.rfm-category-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.rfm-last-activity {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.rfm-item-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.rfm-label-tag {
+    background: var(--capsule-bg);
+    color: var(--primary-hover);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid var(--primary-color);
+}
+
+/* ========== RFM SUMMARY TAB (ESTILO BARRA LATERAL) ========== */
+.rfm-summary-container {
+    border: 2px solid var(--capsule-border);
+    background: var(--capsule-bg);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.rfm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+}
+
+.channel-block-tab {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.channel-header-tab {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: 0.05rem;
+    margin-bottom: 0.75rem;
+}
+
+.channel-badges-tab {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-badge-tab {
+    background: var(--capsule-bg);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--primary-hover);
+}
+
+.metric-card-tab {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.metric-left-tab {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+}
+
+.metric-left-tab lightning-icon {
+    --slds-c-icon-color-foreground: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+.metric-separator-tab {
+    color: var(--border-color);
+    margin: 0 0.5rem;
+}
+
+.metric-value-tab {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     :host {
