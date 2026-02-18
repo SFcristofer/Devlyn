@@ -8,8 +8,6 @@
             <!-- ========== PANEL LATERAL IZQUIERDO (25%) ========== -->
             <lightning-layout-item size="12" medium-device-size="3" large-device-size="3" class="sidebar-column">
                 <div class="sidebar-container">
-                    
-                    <!-- Perfil del Paciente -->
                     <div class="profile-section">
                         <div class="slds-media slds-media_center">
                             <div class="slds-media__figure">
@@ -21,10 +19,7 @@
                                 <div class="profile-meta">C.P: {patientData.zipCode}</div>
                             </div>
                         </div>
-                        
                         <div class="profile-divider"></div>
-                        
-                        <!-- Información de Contacto -->
                         <div class="contact-info">
                             <div class="contact-item">
                                 <lightning-icon icon-name="utility:email" size="xx-small"></lightning-icon>
@@ -40,114 +35,28 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="profile-divider"></div>
-                    
-                    <!-- Resumen del Cliente -->
                     <div class="summary-section">
                         <h3 class="section-title">Resumen del Cliente</h3>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
-                                <span>Monto Total Comprado</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">
-                                <lightning-formatted-number value={patientData.totalSales} format-style="currency" currency-code="MXN"></lightning-formatted-number>
-                            </div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:target" size="xx-small"></lightning-icon>
-                                <span>Total de Ventas</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">{patientData.orderCount}</div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:chart" size="xx-small"></lightning-icon>
-                                <span>Ticket promedio</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">
-                                <lightning-formatted-number value={patientData.avgTicket} format-style="currency" currency-code="MXN"></lightning-formatted-number>
-                            </div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:date_time" size="xx-small"></lightning-icon>
-                                <span>Última compra</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">{patientData.daysSinceLastPurchase} días atrás</div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:home" size="xx-small"></lightning-icon>
-                                <span>Última Sucursal</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">{patientData.lastBranch}</div>
-                        </div>
-                        
-                        <div class="metric-card">
-                            <div class="metric-left">
-                                <lightning-icon icon-name="utility:apps" size="xx-small"></lightning-icon>
-                                <span>Última Categoría</span>
-                            </div>
-                            <div class="metric-separator">|</div>
-                            <div class="metric-value">{patientData.lastCategory}</div>
-                        </div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon><span>Monto Total Comprado</span></div><div class="metric-separator">|</div><div class="metric-value"><lightning-formatted-number value={patientData.totalSales} format-style="currency" currency-code="MXN"></lightning-formatted-number></div></div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:target" size="xx-small"></lightning-icon><span>Total de Ventas</span></div><div class="metric-separator">|</div><div class="metric-value">{patientData.orderCount}</div></div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:chart" size="xx-small"></lightning-icon><span>Ticket promedio</span></div><div class="metric-separator">|</div><div class="metric-value"><lightning-formatted-number value={patientData.avgTicket} format-style="currency" currency-code="MXN"></lightning-formatted-number></div></div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:date_time" size="xx-small"></lightning-icon><span>Última compra</span></div><div class="metric-separator">|</div><div class="metric-value">{patientData.daysSinceLastPurchase} días atrás</div></div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:home" size="xx-small"></lightning-icon><span>Última Sucursal</span></div><div class="metric-separator">|</div><div class="metric-value">{patientData.lastBranch}</div></div>
+                        <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:apps" size="xx-small"></lightning-icon><span>Última Categoría</span></div><div class="metric-separator">|</div><div class="metric-value">{patientData.lastCategory}</div></div>
                     </div>
-                    
                     <div class="profile-divider"></div>
-                    
-                    <!-- Resumen de Compras -->
                     <div class="summary-section">
                         <h3 class="section-title">Resumen de compras</h3>
-                        
                         <div class="channel-block">
                             <div class="channel-header">RETAIL</div>
-                            <div class="channel-badges">
-                                <span class="category-badge">SOL: {patientData.retailCategories.Solares}</span>
-                                <span class="category-badge">LC: {patientData.retailCategories.LentesContacto}</span>
-                                <span class="category-badge">OFT: {patientData.retailCategories.Oftalmicos}</span>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-left">
-                                    <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
-                                    <span>Total de Ventas</span>
-                                </div>
-                                <div class="metric-separator">|</div>
-                                <div class="metric-value">
-                                    <lightning-formatted-number value={patientData.retailTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
-                                </div>
-                            </div>
+                            <div class="channel-badges"><span class="category-badge">SOL: {patientData.retailCategories.Solares}</span><span class="category-badge">LC: {patientData.retailCategories.LentesContacto}</span><span class="category-badge">OFT: {patientData.retailCategories.Oftalmicos}</span></div>
+                            <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon><span>Total Ventas</span></div><div class="metric-separator">|</div><div class="metric-value"><lightning-formatted-number value={patientData.retailTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number></div></div>
                         </div>
-                        
                         <div class="channel-block">
                             <div class="channel-header">ECOMMERCE</div>
-                            <div class="channel-badges">
-                                <span class="category-badge">SOL: {patientData.ecommerceCategories.Solares}</span>
-                                <span class="category-badge">LC: {patientData.ecommerceCategories.LentesContacto}</span>
-                                <span class="category-badge">OFT: {patientData.ecommerceCategories.Oftalmicos}</span>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-left">
-                                    <lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon>
-                                    <span>Total de Ventas</span>
-                                </div>
-                                <div class="metric-separator">|</div>
-                                <div class="metric-value">
-                                    <lightning-formatted-number value={patientData.ecommerceTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number>
-                                </div>
-                            </div>
+                            <div class="channel-badges"><span class="category-badge">SOL: {patientData.ecommerceCategories.Solares}</span><span class="category-badge">LC: {patientData.ecommerceCategories.LentesContacto}</span><span class="category-badge">OFT: {patientData.ecommerceCategories.Oftalmicos}</span></div>
+                            <div class="metric-card"><div class="metric-left"><lightning-icon icon-name="utility:cart" size="xx-small"></lightning-icon><span>Total Ventas</span></div><div class="metric-separator">|</div><div class="metric-value"><lightning-formatted-number value={patientData.ecommerceTotal} format-style="currency" currency-code="MXN"></lightning-formatted-number></div></div>
                         </div>
                     </div>
                 </div>
@@ -180,11 +89,9 @@
                         </div>
                     </div>
                     
-                    <!-- ========== TAB 1: EXPEDIENTE MÉDICO ========== -->
-                    <template if:true={isTabExpediente}>
-                        <div class="tab-content-wrapper">
-                            
-                            <!-- Último Diagnóstico -->
+                    <div class="tab-content-wrapper">
+                        <!-- TAB 1: EXPEDIENTE MÉDICO -->
+                        <template if:true={isTabExpediente}>
                             <div class="info-capsule">
                                 <div class="capsule-header">
                                     <lightning-icon icon-name="utility:description" size="small"></lightning-icon>
@@ -199,7 +106,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Último Examen de la Vista -->
                             <div class="info-capsule">
                                 <div class="capsule-header">
                                     <lightning-icon icon-name="utility:preview" size="small"></lightning-icon>
@@ -207,7 +113,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Antecedentes Médicos (Expandible) -->
                             <div class="info-capsule expandable">
                                 <div class="capsule-header clickable" onclick={toggleAntecedentes}>
                                     <lightning-icon icon-name="utility:task" size="small"></lightning-icon>
@@ -229,7 +134,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Driver Visual (Expandible) -->
                             <div class="info-capsule expandable">
                                 <div class="capsule-header clickable" onclick={toggleDriverVisual}>
                                     <lightning-icon icon-name="utility:preview" size="small"></lightning-icon>
@@ -259,7 +163,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Preguntas poder (Expandible) -->
                             <div class="info-capsule expandable">
                                 <div class="capsule-header clickable" onclick={togglePreguntasPoder}>
                                     <lightning-icon icon-name="utility:question" size="small"></lightning-icon>
@@ -286,7 +189,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Graduaciones de pedidos (Expandible) -->
                             <div class="info-capsule expandable">
                                 <div class="capsule-header clickable" onclick={toggleGraduaciones}>
                                     <lightning-icon icon-name="utility:metrics" size="small"></lightning-icon>
@@ -306,11 +208,9 @@
                                             </lightning-combobox>
                                         </div>
 
-                                        <!-- Gráfica Cronológica (Simulada con SVG dinámico) -->
                                         <div class="chart-container">
                                             <h4 class="chart-title">Evolución Óptica: {selectedSku}</h4>
                                             <div class="visual-chart">
-                                                <!-- Aquí renderizamos los puntos en el tiempo -->
                                                 <template for:each={filteredGraduations} for:item="grad">
                                                     <div key={grad.id} class="chart-point-wrapper">
                                                         <div class="chart-point" title={grad.fecha}></div>
@@ -354,7 +254,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Familia (Perfiles relacionados) (Expandible) -->
                             <div class="info-capsule expandable">
                                 <div class="capsule-header clickable" onclick={toggleFamilia}>
                                     <lightning-icon icon-name="utility:group" size="small"></lightning-icon>
@@ -387,17 +286,14 @@
                                     </template>
                                 </div>
                             </div>
-                        </div>
-                    </template>
-                    
-                    <!-- ========== TAB 2: ORDENES ========== -->
-                    <template if:true={isTabOrdenes}>
-                        <div class="tab-content-wrapper">
+                        </template>
+                        
+                        <!-- TAB 2: ORDENES -->
+                        <template if:true={isTabOrdenes}>
                             <div class="scrollable-content">
                                 <template if:true={hasOrders}>
                                     <template for:each={orders} for:item="orden">
                                         <div key={orden.ordenId} class="orden-card">
-                                            <!-- Contenido de la orden -->
                                             <div class="orden-header" data-id={orden.ordenId} onclick={toggleOrden}>
                                                 <div class="orden-title">
                                                     <lightning-icon icon-name="utility:shopping_cart" size="small"></lightning-icon>
@@ -453,12 +349,10 @@
                                     </div>
                                 </template>
                             </div>
-                        </div>
-                    </template>
-                    
-                    <!-- ========== TAB 3: CITAS ========== -->
-                    <template if:true={isTabCitas}>
-                        <div class="tab-content-wrapper">
+                        </template>
+                        
+                        <!-- TAB 3: CITAS -->
+                        <template if:true={isTabCitas}>
                             <template if:true={hasAppointments}>
                                 <template for:each={appointments} for:item="cita">
                                     <div key={cita.citaId} class="cita-card slds-m-bottom_small">
@@ -480,7 +374,7 @@
                                                     <strong>Sucursal:</strong> {cita.sucursal}
                                                 </div>
                                                 <div class="info-item">
-                                                    <strong>Horario:</strong> {cita.inicio} - {cita.fin}
+                                                    <strong>Horario:</strong> {cita.inicio}
                                                 </div>
                                             </div>
                                         </div>
@@ -493,12 +387,10 @@
                                     <p>No hay citas programadas para este perfil.</p>
                                 </div>
                             </template>
-                        </div>
-                    </template>
-                    
-                    <!-- ========== TAB 4: COTIZACIONES ========== -->
-                    <template if:true={isTabCotizaciones}>
-                        <div class="tab-content-wrapper">
+                        </template>
+                        
+                        <!-- TAB 4: COTIZACIONES -->
+                        <template if:true={isTabCotizaciones}>
                             <template if:true={hasQuotes}>
                                 <template for:each={quotes} for:item="quote">
                                     <div key={quote.presupuestoId} class="cotizacion-card slds-m-bottom_small">
@@ -520,22 +412,6 @@
                                                 <span><strong>Válido hasta:</strong> {quote.fechaExpiracion}</span>
                                                 <span><strong>Sucursal:</strong> {quote.sucursal}</span>
                                             </div>
-                                            
-                                            <template for:each={quote.productos} for:item="producto">
-                                                <div key={producto.sku} class="producto-item">
-                                                    <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
-                                                    <div class="producto-details">
-                                                        <div class="producto-name">{producto.nombre}</div>
-                                                        <div class="producto-info">
-                                                            <span>SKU: {producto.sku}</span>
-                                                            <span>Cantidad: {producto.cantidad}</span>
-                                                        </div>
-                                                        <div class="producto-pricing">
-                                                            <span>Precio Total: ${producto.precioTotal}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
                                         </div>
                                     </div>
                                 </template>
@@ -546,12 +422,10 @@
                                     <p>No hay cotizaciones disponibles para este perfil.</p>
                                 </div>
                             </template>
-                        </div>
-                    </template>
-                    
-                    <!-- ========== TAB 5: SUSCRIPCIONES ========== -->
-                    <template if:true={isTabSuscripciones}>
-                        <div class="tab-content-wrapper">
+                        </template>
+                        
+                        <!-- TAB 5: SUSCRIPCIONES -->
+                        <template if:true={isTabSuscripciones}>
                             <template if:true={hasSubscriptions}>
                                 <template for:each={subscriptions} for:item="sub">
                                     <div key={sub.nombre} class="suscripcion-card slds-m-bottom_small">
@@ -572,19 +446,6 @@
                                                 <span><strong>Fecha Creación:</strong> {sub.fechaCreacion}</span>
                                                 <span><strong>Próxima Compra:</strong> {sub.proximaCompra}</span>
                                             </div>
-                                            
-                                            <template if:true={sub.hasProducts}>
-                                                <template for:each={sub.productos} for:item="producto">
-                                                    <div key={producto.sku} class="producto-item">
-                                                        <div class="producto-details">
-                                                            <div class="producto-name">SKU: {producto.sku}</div>
-                                                            <div class="producto-info">
-                                                                <span>Cantidad: {producto.cantidad}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </template>
                                         </div>
                                     </div>
                                 </template>
@@ -595,12 +456,10 @@
                                     <p>No hay suscripciones activas registradas para este perfil.</p>
                                 </div>
                             </template>
-                        </div>
-                    </template>
-                    
-                    <!-- ========== TAB 6: ENVÍOS MARKETING ========== -->
-                    <template if:true={isTabEnviosMarketing}>
-                        <div class="tab-content-wrapper">
+                        </template>
+                        
+                        <!-- TAB 6: ENVÍOS MARKETING -->
+                        <template if:true={isTabEnviosMarketing}>
                             <div class="scrollable-content">
                                 
                                 <!-- Einstein Email Score -->
@@ -657,45 +516,30 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Campañas -->
+                                <!-- Campañas (Tabla Profesional) -->
                                 <template if:true={hasCampaigns}>
-                                    <template for:each={campaigns} for:item="campana" for:index="campanaIdx">
-                                        <div key={campana.nombre} class="campana-card slds-m-bottom_small">
-                                            <div class="campana-header" data-id={campana.nombre} onclick={toggleCampana}>
-                                                <div class="orden-title">
-                                                    <lightning-icon icon-name="utility:campaign" size="small"></lightning-icon>
-                                                    <span>Campaña: {campana.nombre}</span>
-                                                </div>
-                                                <lightning-icon icon-name={campana.chevronIcon} size="x-small" class={campana.chevronClass}></lightning-icon>
-                                            </div>
-                                            
-                                            <div class={campana.detailsClass}>
-                                                <div class="journey-info">
-                                                    <strong>Journey:</strong> {campana.journey}
-                                                </div>
-                                                
-                                                <template for:each={campana.envios} for:item="envio" for:index="envioIdx">
-                                                    <div key={envio.uniqueKey} class="envio-item slds-m-bottom_x-small">
-                                                        <div class="envio-header" data-index={envioIdx} data-campana={campanaIdx} onclick={toggleEnvio}>
-                                                            <lightning-icon icon-name={envio.icono} size="small"></lightning-icon>
-                                                            <div class="slds-flex_grow">
-                                                                <div class="slds-text-title_bold">{envio.asunto}</div>
-                                                                <div class="slds-text-body_small">Fecha: {envio.fechaEnvio}</div>
-                                                            </div>
-                                                            <lightning-icon icon-name={envio.chevronIcon} size="x-small" class={envio.chevronClass}></lightning-icon>
-                                                        </div>
-                                                        
-                                                        <div class={envio.detailsClass}>
-                                                            <div class="envio-info slds-p-around_small">
-                                                                <div><strong>Desde:</strong> {envio.desde}</div>
-                                                                <div><strong>Asunto Completo:</strong> {envio.asuntoCompleto}</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                    <div class="slds-m-top_medium">
+                                        <table class="graduacion-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Campaña / Asunto</th>
+                                                    <th>Journey</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={campaigns} for:item="envio">
+                                                    <tr key={envio.uniqueKey}>
+                                                        <td>{envio.fechaFormateada}</td>
+                                                        <td class="slds-text-title_bold">{envio.asunto}</td>
+                                                        <td>{envio.journey}</td>
+                                                        <td><span class="status-badge-blue">{envio.status}</span></td>
+                                                    </tr>
                                                 </template>
-                                            </div>
-                                        </div>
-                                    </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </template>
                                 <template if:false={hasCampaigns}>
                                     <div class="slds-text-align_center slds-p-around_xx-large slds-text-color_weak">
@@ -704,8 +548,8 @@
                                     </div>
                                 </template>
                             </div>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                     
                     <!-- Paginación Dinámica -->
                     <template if:true={showPagination}>
