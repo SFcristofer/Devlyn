@@ -102,9 +102,70 @@ public with sharing class TechProfile360Controller {
     }
 
     @AuraEnabled(cacheable=true)
-    public static List<UnifiedssotIndividualDev2__dlm> searchProfilesGlobal(String term) {
+    public static List<Map<String, Object>> searchProfilesGlobal(String term) {
+        if (String.isBlank(term)) return new List<Map<String, Object>>();
+        term = term.trim();
         String q = '%' + term + '%';
-        return [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q OR Email__c LIKE :q OR Id_POS__c LIKE :q LIMIT 20];
+        String qU = q.toUpperCase();
+        String qL = q.toLowerCase();
+        
+        Set<String> individualIds = new Set<String>();
+        Map<String, String> phoneMap = new Map<String, String>();
+
+        // 1. Búsqueda por Teléfono (en objeto relacionado)
+        if (term.replaceAll('[^0-9]', '').length() >= 7) {
+            String phoneTerm = '%' + term.replaceAll('[^0-9]', '') + '%';
+            try {
+                // Usamos ssot__PartyId__c que contiene el ID del Individuo Unificado
+                for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c, ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 20')) {
+                    String indId = (String)p.get('ssot__PartyId__c');
+                    if(String.isNotBlank(indId)) {
+                        individualIds.add(indId);
+                        phoneMap.put(indId, (String)p.get('ssot__TelephoneNumber__c'));
+                    }
+                }
+            } catch(Exception e) {}
+        }
+
+        // 2. Búsqueda por Nombre/Email/POS (en objeto principal)
+        List<UnifiedssotIndividualDev2__dlm> mainResults;
+        List<String> parts = term.split('\\s+');
+        if (parts.size() >= 2) {
+            String f = '%' + parts[0] + '%';
+            String l = '%' + parts[parts.size()-1] + '%';
+            String fU = f.toUpperCase(); String lU = l.toUpperCase();
+            mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
+                    FROM UnifiedssotIndividualDev2__dlm 
+                    WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q 
+                       OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
+                       OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
+                       OR (ssot__FirstName__c LIKE :f AND ssot__LastName__c LIKE :l)
+                       OR (ssot__FirstName__c LIKE :fU AND ssot__LastName__c LIKE :lU)
+                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIds
+                    LIMIT 20];
+        } else {
+            mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
+                    FROM UnifiedssotIndividualDev2__dlm 
+                    WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q 
+                       OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
+                       OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
+                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIds
+                    LIMIT 20];
+        }
+
+        // 3. Consolidación de Resultados
+        List<Map<String, Object>> finalResults = new List<Map<String, Object>>();
+        for(UnifiedssotIndividualDev2__dlm r : mainResults) {
+            Map<String, Object> m = new Map<String, Object>();
+            m.put('ssot__Id__c', r.ssot__Id__c);
+            m.put('ssot__FirstName__c', r.ssot__FirstName__c);
+            m.put('ssot__LastName__c', r.ssot__LastName__c);
+            m.put('Email__c', r.Email__c);
+            m.put('Id_POS__c', r.Id_POS__c);
+            m.put('Telefono__c', phoneMap.containsKey(r.ssot__Id__c) ? phoneMap.get(r.ssot__Id__c) : 'Consultar...'); 
+            finalResults.add(m);
+        }
+        return finalResults;
     }
 
     private static Integer calculateAge(Date dob) { if(dob==null) return 0; return dob.daysBetween(Date.today())/365; }

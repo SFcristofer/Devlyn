@@ -2,7 +2,7 @@
     <div class="search-card">
         <div class="search-header">
             <lightning-icon icon-name="standard:search" size="small" class="header-icon"></lightning-icon>
-            <h2 class="header-title">Profile Explorer (Unified Profiles)</h2>
+            <h2 class="header-title">Explorador de perfil unificado</h2>
         </div>
         
         <div class="search-content">
@@ -12,17 +12,17 @@
                 <div class="search-input-wrapper">
                     <lightning-input 
                         type="search" 
-                        label="Patient Search"
-                        placeholder="Search by Name, Email, POS ID or Code..." 
+                        label="Paciente"
+                        placeholder="Buscar por nombre, correo electrónico, teléfono, POS ID or o código…" 
                         onchange={handleSearchChange}
-                        oncommit={handleSearchAction}
+                        onkeyup={handleKeyUp}
                         value={searchTerm}
                         class="custom-search-input">
                     </lightning-input>
                 </div>
                 <div class="search-button-container">
                     <lightning-button 
-                        label="Search Profiles" 
+                        label="Buscar" 
                         variant="brand" 
                         onclick={handleSearchAction} 
                         disabled={isSearchDisabled}

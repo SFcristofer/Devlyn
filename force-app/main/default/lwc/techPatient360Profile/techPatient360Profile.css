@@ -95,7 +95,7 @@
 }
 
 .profile-meta {
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 300;
     color: var(--white);
     opacity: 0.95;
@@ -129,6 +129,7 @@
 }
 
 .contact-text {
+    font-size: 1rem;
     font-weight: 300;
     line-height: 1.3;
 }
@@ -139,54 +140,54 @@
 }
 
 .section-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.05rem;
-    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 300;
     color: var(--white);
     margin-bottom: 0.75rem;
 }
 
 /* ========== METRIC CARDS CON GLASSMORPHISM ========== */
 .metric-card {
-    background: rgba(255, 255, 255, 0.15);
+     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 10px;
     padding: 0.75rem;
     margin-bottom: 0.6rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     backdrop-filter: blur(10px);
 }
 
 .metric-left {
     display: flex;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 300;
     color: var(--white);
-    flex: 1;
+    width: 50%;        /* ← antes era flex: 1 */
+    gap: 0.5rem;
 }
 
 .metric-left lightning-icon {
     --slds-c-icon-color-foreground: white;
-    margin-right: 0.5rem;
     flex-shrink: 0;
 }
 
 .metric-separator {
     color: var(--white);
-    opacity: 0.6;
-    margin: 0 0.75rem;
-    font-weight: 300;
+    opacity: 0.5;
+    font-size: 1.5rem;
+    font-weight: 200;
+    padding: 0 0.75rem;
+    flex-shrink: 0;
 }
 
 .metric-value {
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--white);
-    text-align: right;
+    width: 50%;        /* ← antes solo era text-align: right */
+    text-align: center;
 }
 
 /* ========== CHANNEL BLOCKS ========== */

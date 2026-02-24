@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>TechDataCloudService</members>
+        <members>TechHelper</members>
+        <members>TechMarketing360</members>
+        <members>TechMarketingHelper</members>
+        <members>TechPatient360Controller</members>
+        <members>TechProfile360Controller</members>
+        <members>TechProfile360Service</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>techPatient360Container</members>
+        <members>techPatient360Profile</members>
+        <members>techProfileSearch</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <version>60.0</version>
+</Package>

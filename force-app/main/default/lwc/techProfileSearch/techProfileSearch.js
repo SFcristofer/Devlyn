@@ -2,9 +2,10 @@ import { LightningElement, track } from 'lwc';
 import searchProfilesGlobal from '@salesforce/apex/TechProfile360Controller.searchProfilesGlobal';
 
 const COLUMNS = [
-    { label: 'Name', fieldName: 'ssot__FirstName__c', type: 'text' },
-    { label: 'Last Name', fieldName: 'ssot__LastName__c', type: 'text' },
-    { label: 'Email', fieldName: 'Email__c', type: 'email' },
+    { label: 'Nombre', fieldName: 'ssot__FirstName__c', type: 'text' },
+    { label: 'Apellido', fieldName: 'ssot__LastName__c', type: 'text' },
+    { label: 'Correo', fieldName: 'Email__c', type: 'email' },
+    { label: 'Teléfono', fieldName: 'Telefono__c', type: 'text' },
     { label: 'ID POS', fieldName: 'Id_POS__c', type: 'text' }
 ];
 
@@ -16,6 +17,12 @@ export default class TechProfileSearch extends LightningElement {
 
     handleSearchChange(event) {
         this.searchTerm = event.target.value;
+    }
+
+    handleKeyUp(event) {
+        if (event.keyCode === 13) {
+            this.handleSearchAction();
+        }
     }
 
     handleSearchAction() {
