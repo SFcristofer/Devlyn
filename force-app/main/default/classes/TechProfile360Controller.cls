@@ -109,25 +109,20 @@ public with sharing class TechProfile360Controller {
         String qU = q.toUpperCase();
         String qL = q.toLowerCase();
         
-        Set<String> individualIds = new Set<String>();
-        Map<String, String> phoneMap = new Map<String, String>();
+        Set<String> individualIdsFromPhone = new Set<String>();
 
-        // 1. Búsqueda por Teléfono (en objeto relacionado)
+        // 1. Si el término parece un teléfono, buscamos IDs de individuos asociados
         if (term.replaceAll('[^0-9]', '').length() >= 7) {
             String phoneTerm = '%' + term.replaceAll('[^0-9]', '') + '%';
             try {
-                // Usamos ssot__PartyId__c que contiene el ID del Individuo Unificado
-                for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c, ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 20')) {
+                for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 20')) {
                     String indId = (String)p.get('ssot__PartyId__c');
-                    if(String.isNotBlank(indId)) {
-                        individualIds.add(indId);
-                        phoneMap.put(indId, (String)p.get('ssot__TelephoneNumber__c'));
-                    }
+                    if(String.isNotBlank(indId)) individualIdsFromPhone.add(indId);
                 }
             } catch(Exception e) {}
         }
 
-        // 2. Búsqueda por Nombre/Email/POS (en objeto principal)
+        // 2. Búsqueda principal (Nombres, Email, POS o IDs encontrados por teléfono)
         List<UnifiedssotIndividualDev2__dlm> mainResults;
         List<String> parts = term.split('\\s+');
         if (parts.size() >= 2) {
@@ -141,7 +136,7 @@ public with sharing class TechProfile360Controller {
                        OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
                        OR (ssot__FirstName__c LIKE :f AND ssot__LastName__c LIKE :l)
                        OR (ssot__FirstName__c LIKE :fU AND ssot__LastName__c LIKE :lU)
-                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIds
+                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
                     LIMIT 20];
         } else {
             mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
@@ -149,11 +144,24 @@ public with sharing class TechProfile360Controller {
                     WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q 
                        OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
                        OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
-                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIds
+                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
                     LIMIT 20];
         }
 
-        // 3. Consolidación de Resultados
+        // 3. Obtenemos los teléfonos de TODOS los resultados encontrados
+        Set<String> finalIds = new Set<String>();
+        for(UnifiedssotIndividualDev2__dlm r : mainResults) finalIds.add(r.ssot__Id__c);
+        
+        Map<String, String> phoneMap = new Map<String, String>();
+        if(!finalIds.isEmpty()) {
+            try {
+                for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c, ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__PartyId__c IN :finalIds')) {
+                    phoneMap.put((String)p.get('ssot__PartyId__c'), (String)p.get('ssot__TelephoneNumber__c'));
+                }
+            } catch(Exception e) {}
+        }
+
+        // 4. Consolidación final
         List<Map<String, Object>> finalResults = new List<Map<String, Object>>();
         for(UnifiedssotIndividualDev2__dlm r : mainResults) {
             Map<String, Object> m = new Map<String, Object>();
@@ -162,7 +170,7 @@ public with sharing class TechProfile360Controller {
             m.put('ssot__LastName__c', r.ssot__LastName__c);
             m.put('Email__c', r.Email__c);
             m.put('Id_POS__c', r.Id_POS__c);
-            m.put('Telefono__c', phoneMap.containsKey(r.ssot__Id__c) ? phoneMap.get(r.ssot__Id__c) : 'Consultar...'); 
+            m.put('Telefono__c', phoneMap.containsKey(r.ssot__Id__c) ? phoneMap.get(r.ssot__Id__c) : 'N/A'); 
             finalResults.add(m);
         }
         return finalResults;
