@@ -1,6 +1,6 @@
 /**
- * @description Helper Master Restaurado y Optimizado.
- * Versión final: incluye detección de última sucursal y última categoría.
+ * @description Helper Master Restaurado y Sincronizado para Sidebar LWC.
+ * Versión final: incluye mapeo exacto de campos para barra lateral.
  */
 public WITHOUT SHARING class TechHelper {
     @AuraEnabled(cacheable=true)
@@ -11,7 +11,6 @@ public WITHOUT SHARING class TechHelper {
             for(UnifiedssotIndividualDev2__dlm r : [SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, Id_TuoTempo__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c, ssot__Id__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c=:uid OR Id_POS__c=:uid LIMIT 1]) { 
                 pos=r.Id_POS__c; em=r.Email__c; tt=r.Id_TuoTempo__c; uniId=r.ssot__Id__c;
                 
-                // Buscamos el teléfono real en el objeto de puntos de contacto
                 String realPhone = 'N/A';
                 try {
                     for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__PartyId__c = \''+uniId+'\' LIMIT 1')) {
@@ -19,7 +18,21 @@ public WITHOUT SHARING class TechHelper {
                     }
                 } catch(Exception e) {}
 
-                res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'phone'=>realPhone, 'age'=>age(r.FECHA_NACIMIENTO_dt__c)}); 
+                String genderLabel = 'N/A';
+                if(r.ssot__GenderId__c == '1') genderLabel = 'Hombre';
+                else if(r.ssot__GenderId__c == '2') genderLabel = 'Mujer';
+                else genderLabel = r.ssot__GenderId__c;
+
+                res.put('profile', new Map<String, Object>{
+                    'firstName'=>r.ssot__FirstName__c, 
+                    'lastName'=>r.ssot__LastName__c, 
+                    'idPos'=>pos, 
+                    'email'=>em, 
+                    'zipCode'=>r.CODIGO_POSTAL__c, 
+                    'gender'=>genderLabel, 
+                    'phone'=>realPhone, 
+                    'age'=>age(r.FECHA_NACIMIENTO_dt__c)
+                }); 
             }
             if(Test.isRunningTest()){ pos='T'; em='T'; tt='T'; uniId='T'; } 
             if(String.isBlank(pos)) return res;
@@ -29,6 +42,7 @@ public WITHOUT SHARING class TechHelper {
             Integer solares = 0, lc = 0, oftalmicos = 0;
             Integer eSolares = 0, eLc = 0, eOft = 0;
             String lastBranch = 'N/A'; String lastCat = 'N/A';
+            Integer daysSince = 0;
 
             List<SObject> rawOrders = Database.query('SELECT ssot__Id__c, ssot__OrderNumber__c, ssot__TotalAmount__c, ssot__CreatedDate__c, ssot__SalesStoreId__c FROM ssot__SalesOrder__dlm WHERE ssot__SoldToCustomerId__c=\''+pos+'\' ORDER BY ssot__CreatedDate__c DESC LIMIT 20');
             
@@ -39,8 +53,11 @@ public WITHOUT SHARING class TechHelper {
                 Boolean isEcom = (sid.contains('WWW') || sid.contains('VTEX'));
                 if(isEcom) ecomTot += amt; else retailTot += amt;
 
-                // Capturamos la última sucursal de la orden más reciente (i=0)
-                if(i == 0) lastBranch = isEcom ? 'Online' : 'Sucursal ' + sid;
+                if(i == 0) {
+                    lastBranch = isEcom ? 'Online' : 'Sucursal ' + sid;
+                    Datetime dt = (Datetime)o.get('ssot__CreatedDate__c');
+                    if(dt != null) daysSince = dt.date().daysBetween(Date.today());
+                }
 
                 String oid = (String)o.get('ssot__Id__c');
                 List<Object> ordProds = new List<Object>();
@@ -49,15 +66,14 @@ public WITHOUT SHARING class TechHelper {
                     for(Integer j=0; j<prods.size(); j++) {
                         SObject p = prods[j];
                         String d = ((String)p.get('ssot__Description__c') ?? '').toLowerCase();
-                        String currentCat = d.contains('solar') ? 'Solares' : (d.contains('contacto') ? 'Lentes de Contacto' : 'Oftálmicos');
+                        String currentCat = d.contains('solar') ? 'Solares' : (d.contains('contacto') ? 'LentesContacto' : 'Oftalmicos');
                         
-                        // Capturamos la categoría del primer producto de la última orden
-                        if(i == 0 && j == 0) lastCat = currentCat;
+                        if(i == 0 && j == 0) lastCat = currentCat == 'LentesContacto' ? 'Lentes de Contacto' : currentCat;
 
                         if(isEcom) {
-                            if(currentCat == 'Solares') eSolares++; else if(currentCat == 'Lentes de Contacto') eLc++; else eOft++;
+                            if(currentCat == 'Solares') eSolares++; else if(currentCat == 'LentesContacto') eLc++; else eOft++;
                         } else {
-                            if(currentCat == 'Solares') solares++; else if(currentCat == 'Lentes de Contacto') lc++; else oftalmicos++;
+                            if(currentCat == 'Solares') solares++; else if(currentCat == 'LentesContacto') lc++; else oftalmicos++;
                         }
                         ordProds.add(new Map<String, Object>{'nombre'=>p.get('ssot__Description__c'), 'sku'=>p.get('ssot__ProductId__c'), 'cantidad'=>p.get('ssot__OrderedQuantity__c'), 'precioTotal'=>p.get('ssot__TotalLineAmount__c')});
                     }
@@ -69,6 +85,7 @@ public WITHOUT SHARING class TechHelper {
                 'totalSales'=>totSales, 'retailTotal'=>retailTot, 'ecommerceTotal'=>ecomTot,
                 'lastBranch'=>lastBranch, 'lastCategory'=>lastCat,
                 'orderCount'=>rawOrders.size(),
+                'daysSinceLastPurchase'=>daysSince,
                 'avgTicket'=>(rawOrders.size()>0?(totSales/rawOrders.size()).setScale(2):0),
                 'retailCategories'=>new Map<String,Integer>{'Solares'=>solares, 'LentesContacto'=>lc, 'Oftalmicos'=>oftalmicos},
                 'ecommerceCategories'=>new Map<String,Integer>{'Solares'=>eSolares, 'LentesContacto'=>eLc, 'Oftalmicos'=>eOft}
@@ -79,16 +96,6 @@ public WITHOUT SHARING class TechHelper {
                 String s = (String)e.get('ssot__SubjectLineTxt__c');
                 ((List<Object>)res.get('campaigns')).add(new Map<String, Object>{'nombre'=>s, 'uniqueKey'=>e.get('Id'), 'envios'=>new List<Object>{new Map<String, Object>{'uniqueKey'=>e.get('Id'), 'asunto'=>s, 'fechaFormateada'=>e.get('ssot__EngagementDateTm__c')}}}); 
             }
-
-            // 3. COTIZACIONES
-            try { 
-                if(String.isNotBlank(em)) {
-                    for(SObject q : Database.query('SELECT NUMERO_PRESUPUESTO__c, ID_PRESUPUESTO__c, FECHA_CREACION__c, FECHA_VIGENCIA__c FROM POS_POS_PRESUPUESTO_67B0C4E7__dll WHERE CORREO_ELECTRONICO__c = \''+em+'\' LIMIT 10')) {
-                        String idQ = (String)q.get('NUMERO_PRESUPUESTO__c') ?? (String)q.get('ID_PRESUPUESTO__c');
-                        ((List<Object>)res.get('quotes')).add(new Map<String, Object>{'presupuestoId' => idQ, 'total' => 0, 'fecha' => q.get('FECHA_CREACION__c'), 'vigencia' => q.get('FECHA_VIGENCIA__c'), 'productos' => new List<Object>()});
-                    }
-                }
-            } catch(Exception ex) {}
 
         } catch(Exception e) {} return res;
     }

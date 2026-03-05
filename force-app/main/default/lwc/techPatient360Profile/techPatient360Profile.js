@@ -3,7 +3,21 @@ import { refreshApex } from '@salesforce/apex';
 import getFullData from '@salesforce/apex/TechHelper.getFullData';
 
 export default class TechPatient360Profile extends LightningElement {
-    @api recordId;
+    // Variable interna para el recordId
+    internalRecordId;
+
+    @api 
+    get recordId() {
+        return this.internalRecordId;
+    }
+    set recordId(value) {
+        // --- REINICIO TOTAL AL CAMBIAR DE CLIENTE ---
+        if (this.internalRecordId !== value) {
+            this.internalRecordId = value;
+            this.resetComponentState();
+        }
+    }
+
     @track isLoading = true;
     @track activeTab = 'expediente';
 
@@ -14,40 +28,68 @@ export default class TechPatient360Profile extends LightningElement {
     @track isGraduacionesOpen = false;
     @track isFamiliaOpen = false;
 
-    // Datos del Paciente inicializados
-    @track patientData = {
-        firstName: '', lastName: '', age: 0, gender: '', email: '', phone: 'N/A', idPos: '', cp: '',
-        totalSales: 0, orderCount: 0, avgTicket: 0, lastBranch: 'N/A', lastCategory: 'N/A',
-        retailTotal: 0, ecommerceTotal: 0,
-        retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
-        ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
-        medicalHistory: [], medicalNotes: '', visualDriver: {}, powerQuestions: {}, familyRelations: []
-    };
+    // Datos del Paciente inicializados (Estructura Sidebar)
+    @track patientData = this.getDefaultPatientData();
 
     @track orders = [];
-        @track appointments = []; @track quotes = []; @track subscriptions = []; @track campaigns = [];
-        @track diagnoses = []; @track lastDiagnosisDate = 'N/A'; @track lastExamDate = 'N/A';
-        @track rfmHistory = [];
-        @track rfmRetail = { solaresLabel: 'Sin Datos' };
-    @track rfmEcommerce = { solaresLabel: 'Sin Datos' };
+    @track appointments = []; 
+    @track quotes = []; 
+    @track subscriptions = []; 
+    @track campaigns = [];
+    @track diagnoses = []; 
+    @track lastDiagnosisDate = 'N/A'; 
+    @track lastExamDate = 'N/A';
     @track einsteinScore = { propensidadClick: 'Media', propensidadAbrir: 'Alta' };
 
     _wiredResult;
 
-    @wire(getFullData, { uid: '$recordId' })
+    @wire(getFullData, { uid: '$internalRecordId' })
     wiredData(result) {
         this._wiredResult = result;
         if (result.data) {
             const d = result.data;
-            if (d.profile) this.patientData = { ...this.patientData, ...d.profile };
-            if (d.metrics) this.patientData = { ...this.patientData, ...d.metrics };
             
-            // Órdenes Procesadas (VISTA MEJORADA)
+            // --- CONSTRUCCIÓN ATÓMICA DE DATOS (EVITA PERSISTENCIA) ---
+            const newPatientData = this.getDefaultPatientData();
+
+            if (d.profile) {
+                newPatientData.firstName = d.profile.firstName || '';
+                newPatientData.lastName = d.profile.lastName || '';
+                newPatientData.age = d.profile.age || 0;
+                newPatientData.gender = d.profile.gender || 'N/A';
+                newPatientData.email = d.profile.email || 'N/A';
+                newPatientData.phone = d.profile.phone || 'N/A';
+                newPatientData.idPos = d.profile.idPos || 'N/A';
+                newPatientData.zipCode = d.profile.zipCode || 'N/A';
+            }
+
+            if (d.metrics) {
+                newPatientData.totalSales = d.metrics.totalSales || 0;
+                newPatientData.orderCount = d.metrics.orderCount || 0;
+                newPatientData.avgTicket = d.metrics.avgTicket || 0;
+                newPatientData.daysSinceLastPurchase = d.metrics.daysSinceLastPurchase || 0;
+                newPatientData.lastBranch = d.metrics.lastBranch || 'N/A';
+                newPatientData.lastCategory = d.metrics.lastCategory || 'N/A';
+                newPatientData.retailTotal = d.metrics.retailTotal || 0;
+                newPatientData.ecommerceTotal = d.metrics.ecommerceTotal || 0;
+                
+                if (d.metrics.retailCategories) {
+                    newPatientData.retailCategories = { ...d.metrics.retailCategories };
+                }
+                if (d.metrics.ecommerceCategories) {
+                    newPatientData.ecommerceCategories = { ...d.metrics.ecommerceCategories };
+                }
+            }
+
+            // Asignación Atómica: LWC detecta el cambio de objeto completo
+            this.patientData = newPatientData;
+
+            // --- PROCESAMIENTO DE TABLAS ---
             const formatCurrency = (val) => Number(val || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
             const formatDate = (dateStr) => {
                 if (!dateStr || dateStr === 'N/A') return 'Sin fecha';
-                const d = new Date(dateStr);
-                return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('es-MX');
+                const dateObj = new Date(dateStr);
+                return isNaN(dateObj.getTime()) ? dateStr : dateObj.toLocaleDateString('es-MX');
             };
 
             this.orders = (d.orders || []).map(o => ({
@@ -58,14 +100,11 @@ export default class TechPatient360Profile extends LightningElement {
                 totalFormatted: formatCurrency(o.total),
                 fechaCompraFormatted: formatDate(o.fechaCompra),
                 productos: (o.productos || []).map(p => ({
-                    nombre: p.nombre || 'Producto',
-                    sku: p.sku || 'S/SKU',
-                    cantidad: p.cantidad || 1,
+                    ...p,
                     precioTotalFormatted: formatCurrency(p.precioTotal)
                 }))
             }));
 
-            // Campañas Procesadas
             this.campaigns = (d.campaigns || []).map((c, cIdx) => ({
                 ...c,
                 isExpanded: false,
@@ -73,11 +112,8 @@ export default class TechPatient360Profile extends LightningElement {
                 detailsClass: 'campana-details collapsed',
                 envios: (c.envios || []).map((e, eIdx) => ({
                     ...e,
-                    asunto: e.asunto || c.nombre || 'Correo Devlyn',
-                    asuntoCompleto: e.asunto || c.nombre,
-                    desde: 'Devlyn',
-                    fechaEnvio: e.fechaFormateada || 'N/A',
-                    icono: 'utility:email',
+                    asunto: e.asunto || 'Correo Devlyn',
+                    fechaEnvio: formatDate(e.fechaFormateada),
                     isExpanded: false,
                     chevronIcon: 'utility:chevrondown',
                     detailsClass: 'envio-details collapsed',
@@ -85,76 +121,19 @@ export default class TechPatient360Profile extends LightningElement {
                 }))
             }));
 
-            // Cotizaciones Procesadas (VISTA MEJORADA)
-            this.quotes = (d.quotes || []).map(q => {
-                const formatDate = (dateStr) => {
-                    if (!dateStr || dateStr === 'N/A') return 'Sin fecha';
-                    const d = new Date(dateStr);
-                    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('es-MX');
-                };
-
-                return {
-                    ...q,
-                    presupuestoId: q.presupuestoId || 'S/N',
-                    status: 'Pendiente',
-                    total: q.total ? Number(q.total).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }) : '$0.00',
-                    fecha: formatDate(q.fecha),
-                    fechaExpiracion: formatDate(q.vigencia),
-                    sucursal: q.sucursal || 'Sucursal Devlyn',
-                    isExpanded: false,
-                    chevronIcon: 'utility:chevrondown',
-                    productosClass: 'cotizacion-productos collapsed',
-                    productos: (q.productos || []).map(p => ({
-                        nombre: p.nombre || 'Sin nombre',
-                        sku: p.sku || 'S/SKU',
-                        cantidad: p.cantidad || 1,
-                        precioTotalFormatted: p.precioTotal ? Number(p.precioTotal).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }) : '$0.00'
-                    }))
-                };
-            });
+            this.quotes = (d.quotes || []).map(q => ({
+                ...q,
+                total: formatCurrency(q.total),
+                fecha: formatDate(q.fecha),
+                fechaExpiracion: formatDate(q.vigencia),
+                isExpanded: false,
+                chevronIcon: 'utility:chevrondown',
+                productosClass: 'cotizacion-productos collapsed'
+            }));
 
             this.appointments = d.appointments || [];
             this.subscriptions = d.subscriptions || [];
 
-            // Mapeo de Scores de Marketing y RFM
-            if(d.marketingScores) {
-                const s = d.marketingScores;
-                this.einsteinScore = { propensidadClick: s.propensidadClick || 'Media', propensidadAbrir: s.propensidadAbrir || 'Media' };
-                
-                // Historial para uso interno o futuro
-                this.rfmHistory = (s.rfmHistory || []).map(h => ({
-                    ...h,
-                    lastDateFormatted: h.last ? formatDate(h.last) : 'Sin actividad'
-                }));
-
-                // Restauramos rfmRetail y rfmEcommerce para la vista de tabla
-                this.rfmRetail = {
-                    solares: this.rfmHistory[0]?.score || '1/5',
-                    lentesContacto: this.rfmHistory[1]?.score || '1/5',
-                    oftalmicos: this.rfmHistory[2]?.score || '1/5',
-                    solaresLabel: this.rfmHistory[0]?.label || 'Inactivo',
-                    lentesContactoLabel: this.rfmHistory[1]?.label || 'Potencial',
-                    oftalmicosLabel: this.rfmHistory[2]?.label || 'Nuevo',
-                    ultimaVenta: this.rfmHistory[2]?.lastDateFormatted || 'Sin datos'
-                };
-                this.rfmEcommerce = { ...this.rfmRetail, solares: '1/5', solaresLabel: 'Inactivo' }; // Ejemplo para ecommerce
-            }
-
-            if (d.medical) {
-                const m = d.medical;
-                if (m.diagnosis) {
-                    this.diagnoses = m.diagnosis.MIOPIA__c ? ['Miopía'] : ['Sano'];
-                    this.lastDiagnosisDate = m.diagnosis.FECHA__c || 'N/A';
-                    this.lastExamDate = m.lastExam || 'N/A';
-                }
-                if (m.antecedents) {
-                    let h = [];
-                    if (m.antecedents.DIABETES__c) h.push('Diabetes');
-                    this.patientData.medicalHistory = h;
-                    this.patientData.medicalNotes = m.antecedents.NOTAS__c || 'Sin notas';
-                }
-                this.patientData.visualDriver = m.visualDriver || {};
-            }
             this.isLoading = false;
         } else if (result.error) {
             console.error('Error loading data:', result.error);
@@ -162,7 +141,36 @@ export default class TechPatient360Profile extends LightningElement {
         }
     }
 
-    // Handlers de Pestañas
+    getDefaultPatientData() {
+        return {
+            firstName: '', lastName: '', age: 0, gender: '', email: '', phone: 'N/A', idPos: '', zipCode: '',
+            totalSales: 0, orderCount: 0, avgTicket: 0, lastBranch: 'N/A', lastCategory: 'N/A', daysSinceLastPurchase: 0,
+            retailTotal: 0, ecommerceTotal: 0,
+            retailCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+            ecommerceCategories: { Solares: 0, LentesContacto: 0, Oftalmicos: 0 },
+            medicalHistory: [], medicalNotes: '', visualDriver: {}, powerQuestions: {}, familyRelations: []
+        };
+    }
+
+    resetComponentState() {
+        this.isLoading = true;
+        this.activeTab = 'expediente';
+        this.isAntecedenteOpen = false;
+        this.isDriverVisualOpen = false;
+        this.isPreguntasPoderOpen = false;
+        this.isGraduacionesOpen = false;
+        this.isFamiliaOpen = false;
+        
+        this.patientData = this.getDefaultPatientData();
+        this.orders = [];
+        this.appointments = [];
+        this.quotes = [];
+        this.campaigns = [];
+        this.diagnoses = [];
+        this.lastDiagnosisDate = 'N/A';
+        this.lastExamDate = 'N/A';
+    }
+
     handleTabExpediente() { this.activeTab = 'expediente'; }
     handleTabOrdenes() { this.activeTab = 'ordenes'; }
     handleTabCitas() { this.activeTab = 'citas'; }
@@ -170,7 +178,6 @@ export default class TechPatient360Profile extends LightningElement {
     handleTabSuscripciones() { this.activeTab = 'suscripciones'; }
     handleTabEnviosMarketing() { this.activeTab = 'enviosMarketing'; }
 
-    // Getters de Visibilidad
     get isTabExpediente() { return this.activeTab === 'expediente'; }
     get isTabOrdenes() { return this.activeTab === 'ordenes'; }
     get isTabCitas() { return this.activeTab === 'citas'; }
@@ -183,10 +190,6 @@ export default class TechPatient360Profile extends LightningElement {
     get hasQuotes() { return this.quotes && this.quotes.length > 0; }
     get hasSubscriptions() { return this.subscriptions && this.subscriptions.length > 0; }
     get hasCampaigns() { return this.campaigns && this.campaigns.length > 0; }
-    get hasFamilyRelations() { return this.patientData.familyRelations && this.patientData.familyRelations.length > 0; }
-    get hasVisualDriver() { return Object.keys(this.patientData.visualDriver).length > 0; }
-    get hasPowerQuestions() { return Object.keys(this.patientData.powerQuestions).length > 0; }
-    get hasGraduations() { return false; }
 
     get tabExpedienteClass() { return this.activeTab === 'expediente' ? 'tab-button active' : 'tab-button'; }
     get tabOrdenesClass() { return this.activeTab === 'ordenes' ? 'tab-button active' : 'tab-button'; }

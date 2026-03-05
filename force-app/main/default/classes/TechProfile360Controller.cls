@@ -1,6 +1,6 @@
 /**
  * @description Controlador Maestro Devlyn 360 - VERSIÓN INTEGRAL RESTAURADA Y OPTIMIZADA.
- * Implementa búsqueda por capas con Priorización de Identificadores Numéricos.
+ * Soporta búsquedas por N-palabras, IDs numéricos y correos electrónicos complejos.
  */
 public with sharing class TechProfile360Controller {
 
@@ -36,46 +36,55 @@ public with sharing class TechProfile360Controller {
     public static List<Map<String, Object>> searchProfilesGlobal(String term) {
         if (String.isBlank(term)) return new List<Map<String, Object>>();
         term = term.trim();
+        Boolean isEmail = term.contains('@');
         List<String> tokens = term.split('\\s+');
         String numericToken = null;
         for(String t : tokens) { if(t.isNumeric()) { numericToken = t; break; } }
         
         Set<String> idsFromPhones = new Set<String>();
-        for(String t : tokens) {
-            String cleanT = t.replaceAll('[^0-9]', '');
-            if (cleanT.length() >= 7) {
-                String phoneTerm = '%' + cleanT + '%';
-                try {
-                    for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 200')) {
-                        String indId = (String)p.get('ssot__PartyId__c');
-                        if(String.isNotBlank(indId)) idsFromPhones.add(indId);
-                    }
-                } catch(Exception e) {}
+        if(!isEmail) {
+            for(String t : tokens) {
+                String cleanT = t.replaceAll('[^0-9]', '');
+                if (cleanT.length() >= 7) {
+                    String phoneTerm = '%' + cleanT + '%';
+                    try {
+                        for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 200')) {
+                            String indId = (String)p.get('ssot__PartyId__c');
+                            if(String.isNotBlank(indId)) idsFromPhones.add(indId);
+                        }
+                    } catch(Exception e) {}
+                }
             }
         }
 
         Map<String, String> bindMap = new Map<String, String>();
         for(Integer i=0; i<tokens.size(); i++) bindMap.put('p'+i, '%' + tokens[i].toUpperCase() + '%');
 
-        // --- FASE 1: PRECISIÓN TOTAL (AND) ---
-        String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
-        List<String> andConds = new List<String>();
-        for(Integer i=0; i<tokens.size(); i++) andConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+' OR Id_POS__c LIKE :p'+i+')');
-        q1 += String.join(andConds, ' AND ') + ' LIMIT 200';
-        List<UnifiedssotIndividualDev2__dlm> precisionResults = Database.queryWithBinds(q1, bindMap, AccessLevel.USER_MODE);
+        // --- FASE 1: BÚSQUEDA ESPECIALIZADA (EMAIL O AND) ---
+        List<UnifiedssotIndividualDev2__dlm> precisionResults = new List<UnifiedssotIndividualDev2__dlm>();
+        if(isEmail) {
+            String emailTerm = '%' + term.toUpperCase() + '%';
+            bindMap.put('emailTerm', emailTerm);
+            precisionResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE Email__c LIKE :emailTerm LIMIT 200', bindMap, AccessLevel.USER_MODE);
+        } else {
+            String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
+            List<String> andConds = new List<String>();
+            for(Integer i=0; i<tokens.size(); i++) andConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+' OR Id_POS__c LIKE :p'+i+' OR Email__c LIKE :p'+i+')');
+            q1 += String.join(andConds, ' AND ') + ' LIMIT 200';
+            precisionResults = Database.queryWithBinds(q1, bindMap, AccessLevel.USER_MODE);
+        }
 
-        // --- FASE 2: PRIORIDAD NUMÉRICA (Si existe un número en la búsqueda) ---
+        // --- FASE 2: PRIORIDAD NUMÉRICA ---
         List<UnifiedssotIndividualDev2__dlm> numericResults = new List<UnifiedssotIndividualDev2__dlm>();
-        if(numericToken != null && precisionResults.size() < 200) {
+        if(!isEmail && numericToken != null && precisionResults.size() < 200) {
             String numPat = '%' + numericToken + '%';
             bindMap.put('numPat', numPat);
-            String qNum = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__FirstName__c LIKE :numPat OR ssot__LastName__c LIKE :numPat OR Id_POS__c LIKE :numPat LIMIT 200';
-            numericResults = Database.queryWithBinds(qNum, bindMap, AccessLevel.USER_MODE);
+            numericResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__FirstName__c LIKE :numPat OR ssot__LastName__c LIKE :numPat OR Id_POS__c LIKE :numPat LIMIT 200', bindMap, AccessLevel.USER_MODE);
         }
 
         // --- FASE 3: VOLUMEN (OR) ---
         List<UnifiedssotIndividualDev2__dlm> broadResults = new List<UnifiedssotIndividualDev2__dlm>();
-        if(precisionResults.size() + numericResults.size() < 200) {
+        if(!isEmail && precisionResults.size() + numericResults.size() < 200) {
             String qBroad = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
             List<String> orConds = new List<String>();
             for(Integer i=0; i<tokens.size(); i++) orConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+')');
@@ -84,7 +93,6 @@ public with sharing class TechProfile360Controller {
             broadResults = Database.queryWithBinds(qBroad, bindMap, AccessLevel.USER_MODE);
         }
 
-        // Combinar todos los candidatos
         Map<String, UnifiedssotIndividualDev2__dlm> uniqueMap = new Map<String, UnifiedssotIndividualDev2__dlm>();
         for(UnifiedssotIndividualDev2__dlm r : precisionResults) uniqueMap.put(r.ssot__Id__c, r);
         for(UnifiedssotIndividualDev2__dlm r : numericResults) uniqueMap.put(r.ssot__Id__c, r);
@@ -102,7 +110,7 @@ public with sharing class TechProfile360Controller {
 
         List<SearchResultWrapper> wrappedResults = new List<SearchResultWrapper>();
         for(UnifiedssotIndividualDev2__dlm r : uniqueMap.values()) {
-            wrappedResults.add(new SearchResultWrapper(r, tokens, phoneMap.get(r.ssot__Id__c)));
+            wrappedResults.add(new SearchResultWrapper(r, tokens, phoneMap.get(r.ssot__Id__c), term));
         }
         wrappedResults.sort();
 
@@ -124,9 +132,11 @@ public with sharing class TechProfile360Controller {
     public class SearchResultWrapper implements Comparable {
         public UnifiedssotIndividualDev2__dlm record;
         public Integer score;
+        public String fullTerm;
 
-        public SearchResultWrapper(UnifiedssotIndividualDev2__dlm r, List<String> tokens, String phone) {
+        public SearchResultWrapper(UnifiedssotIndividualDev2__dlm r, List<String> tokens, String phone, String term) {
             this.record = r;
+            this.fullTerm = term.toUpperCase();
             this.score = calculateScore(r, tokens, phone);
         }
 
@@ -134,44 +144,34 @@ public with sharing class TechProfile360Controller {
             Integer s = 0;
             String fn = (r.ssot__FirstName__c ?? '').toUpperCase();
             String ln = (r.ssot__LastName__c ?? '').toUpperCase();
+            String email = (r.Email__c ?? '').toUpperCase();
             String fullName = (fn + ' ' + ln).replaceAll('\\s+', ' ').trim();
             List<String> nameParts = fullName.split('\\s+');
-            Set<String> nameSet = new Set<String>();
-            for(String p : nameParts) nameSet.add(p);
 
-            // 1. BONO DE COBERTURA (DENSIDAD)
+            // 1. BONO DE EMAIL (MÁXIMA PRIORIDAD)
+            if(fullTerm.contains('@')) {
+                if(email == fullTerm) return 500000;
+                if(email.contains(fullTerm)) s += 250000;
+            }
+
+            // 2. BONO DE COBERTURA Y DENSIDAD
             Integer matchedWords = 0;
             Integer numericMatches = 0;
             for(String t : tokens) {
                 String tu = t.toUpperCase();
-                if(nameSet.contains(tu) || (r.Id_POS__c ?? '').contains(tu)) {
+                if(fullName.contains(tu) || (r.Id_POS__c ?? '').contains(tu) || email.contains(tu)) {
                     matchedWords++;
                     if(t.isNumeric()) numericMatches++;
                 }
             }
-            
-            // Si tiene 100% de coincidencia de palabras, bono extremo
-            if(matchedWords >= tokens.size()) s += 200000;
+            if(matchedWords >= tokens.size()) s += 100000;
             else s += (matchedWords * 10000);
-            
-            s += (numericMatches * 50000); // Bono masivo por ID numérico
+            s += (numericMatches * 50000);
 
-            // 2. MATCH DE SECUENCIA
-            String searchTerm = String.join(tokens, ' ').toUpperCase();
-            if(fullName == searchTerm) s += 50000;
-            if(fullName.contains(searchTerm)) s += 25000;
+            // 3. MATCH DE SECUENCIA
+            if(fullName == fullTerm) s += 50000;
+            if(fullName.contains(fullTerm)) s += 25000;
 
-            Integer lastMatchedIdx = -1;
-            for(String t : tokens) {
-                String tu = t.toUpperCase();
-                for(Integer i=0; i<nameParts.size(); i++) {
-                    if(nameParts[i] == tu) {
-                        s += 1000;
-                        if(i == lastMatchedIdx + 1) s += 5000;
-                        lastMatchedIdx = i; break;
-                    }
-                }
-            }
             if(!tokens.isEmpty() && fn.startsWith(tokens[0].toUpperCase())) s += 5000;
             s -= (nameParts.size() * 5); 
             return s;
