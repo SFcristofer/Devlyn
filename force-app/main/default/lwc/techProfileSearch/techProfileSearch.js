@@ -16,7 +16,7 @@ export default class TechProfileSearch extends LightningElement {
     
     // Paginación
     @track currentPage = 1;
-    pageSize = 15;
+    pageSize = 20;
     
     columns = COLUMNS;
 

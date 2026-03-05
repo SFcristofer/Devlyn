@@ -51,7 +51,7 @@
 }
 
 .results-table-wrapper {
-    height: 450px; /* Ajustado para ~15 filas */
+    height: 600px; /* Ajustado para ~20 filas */
 }
 
 .custom-datatable {
