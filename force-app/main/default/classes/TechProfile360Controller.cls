@@ -1,5 +1,6 @@
 /**
  * @description Controlador Maestro Devlyn 360 - VERSIÓN INTEGRAL RESTAURADA Y OPTIMIZADA.
+ * Implementa búsqueda por capas con Priorización de Identificadores Numéricos.
  */
 public with sharing class TechProfile360Controller {
 
@@ -36,6 +37,8 @@ public with sharing class TechProfile360Controller {
         if (String.isBlank(term)) return new List<Map<String, Object>>();
         term = term.trim();
         List<String> tokens = term.split('\\s+');
+        String numericToken = null;
+        for(String t : tokens) { if(t.isNumeric()) { numericToken = t; break; } }
         
         Set<String> idsFromPhones = new Set<String>();
         for(String t : tokens) {
@@ -51,31 +54,41 @@ public with sharing class TechProfile360Controller {
             }
         }
 
-        // FASE 1: AND
+        Map<String, String> bindMap = new Map<String, String>();
+        for(Integer i=0; i<tokens.size(); i++) bindMap.put('p'+i, '%' + tokens[i].toUpperCase() + '%');
+
+        // --- FASE 1: PRECISIÓN TOTAL (AND) ---
         String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
         List<String> andConds = new List<String>();
-        Map<String, String> bindMap = new Map<String, String>();
-        for(Integer i=0; i<tokens.size(); i++) {
-            String k = 'p'+i; bindMap.put(k, '%' + tokens[i].toUpperCase() + '%');
-            andConds.add('(ssot__FirstName__c LIKE :'+k+' OR ssot__LastName__c LIKE :'+k+' OR Email__c LIKE :'+k+' OR Id_POS__c LIKE :'+k+')');
-        }
+        for(Integer i=0; i<tokens.size(); i++) andConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+' OR Id_POS__c LIKE :p'+i+')');
         q1 += String.join(andConds, ' AND ') + ' LIMIT 200';
         List<UnifiedssotIndividualDev2__dlm> precisionResults = Database.queryWithBinds(q1, bindMap, AccessLevel.USER_MODE);
 
-        // FASE 2: OR
+        // --- FASE 2: PRIORIDAD NUMÉRICA (Si existe un número en la búsqueda) ---
+        List<UnifiedssotIndividualDev2__dlm> numericResults = new List<UnifiedssotIndividualDev2__dlm>();
+        if(numericToken != null && precisionResults.size() < 200) {
+            String numPat = '%' + numericToken + '%';
+            bindMap.put('numPat', numPat);
+            String qNum = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__FirstName__c LIKE :numPat OR ssot__LastName__c LIKE :numPat OR Id_POS__c LIKE :numPat LIMIT 200';
+            numericResults = Database.queryWithBinds(qNum, bindMap, AccessLevel.USER_MODE);
+        }
+
+        // --- FASE 3: VOLUMEN (OR) ---
         List<UnifiedssotIndividualDev2__dlm> broadResults = new List<UnifiedssotIndividualDev2__dlm>();
-        if(precisionResults.size() < 200) {
-            String q2 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
+        if(precisionResults.size() + numericResults.size() < 200) {
+            String qBroad = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
             List<String> orConds = new List<String>();
             for(Integer i=0; i<tokens.size(); i++) orConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+')');
             if(!idsFromPhones.isEmpty()) orConds.add('ssot__Id__c IN :idsFromPhones');
-            q2 += '(' + String.join(orConds, ' OR ') + ') LIMIT ' + (200 - precisionResults.size());
-            broadResults = Database.queryWithBinds(q2, bindMap, AccessLevel.USER_MODE);
+            qBroad += '(' + String.join(orConds, ' OR ') + ') LIMIT 200';
+            broadResults = Database.queryWithBinds(qBroad, bindMap, AccessLevel.USER_MODE);
         }
 
+        // Combinar todos los candidatos
         Map<String, UnifiedssotIndividualDev2__dlm> uniqueMap = new Map<String, UnifiedssotIndividualDev2__dlm>();
         for(UnifiedssotIndividualDev2__dlm r : precisionResults) uniqueMap.put(r.ssot__Id__c, r);
-        for(UnifiedssotIndividualDev2__dlm r : broadResults) uniqueMap.put(r.ssot__Id__c, r);
+        for(UnifiedssotIndividualDev2__dlm r : numericResults) uniqueMap.put(r.ssot__Id__c, r);
+        for(UnifiedssotIndividualDev2__dlm r : broadResults) if(uniqueMap.size() < 200) uniqueMap.put(r.ssot__Id__c, r);
 
         Set<String> finalIds = uniqueMap.keySet();
         Map<String, String> phoneMap = new Map<String, String>();
@@ -126,13 +139,27 @@ public with sharing class TechProfile360Controller {
             Set<String> nameSet = new Set<String>();
             for(String p : nameParts) nameSet.add(p);
 
+            // 1. BONO DE COBERTURA (DENSIDAD)
             Integer matchedWords = 0;
-            for(String t : tokens) if(nameSet.contains(t.toUpperCase())) matchedWords++;
-            if(matchedWords == tokens.size()) s += 50000; else s += (matchedWords * 5000);
+            Integer numericMatches = 0;
+            for(String t : tokens) {
+                String tu = t.toUpperCase();
+                if(nameSet.contains(tu) || (r.Id_POS__c ?? '').contains(tu)) {
+                    matchedWords++;
+                    if(t.isNumeric()) numericMatches++;
+                }
+            }
+            
+            // Si tiene 100% de coincidencia de palabras, bono extremo
+            if(matchedWords >= tokens.size()) s += 200000;
+            else s += (matchedWords * 10000);
+            
+            s += (numericMatches * 50000); // Bono masivo por ID numérico
 
+            // 2. MATCH DE SECUENCIA
             String searchTerm = String.join(tokens, ' ').toUpperCase();
-            if(fullName == searchTerm) s += 20000;
-            if(fullName.contains(searchTerm)) s += 10000;
+            if(fullName == searchTerm) s += 50000;
+            if(fullName.contains(searchTerm)) s += 25000;
 
             Integer lastMatchedIdx = -1;
             for(String t : tokens) {
@@ -140,13 +167,13 @@ public with sharing class TechProfile360Controller {
                 for(Integer i=0; i<nameParts.size(); i++) {
                     if(nameParts[i] == tu) {
                         s += 1000;
-                        if(i == lastMatchedIdx + 1) s += 2000;
+                        if(i == lastMatchedIdx + 1) s += 5000;
                         lastMatchedIdx = i; break;
                     }
                 }
             }
             if(!tokens.isEmpty() && fn.startsWith(tokens[0].toUpperCase())) s += 5000;
-            s -= (nameParts.size() * 10);
+            s -= (nameParts.size() * 5); 
             return s;
         }
 
@@ -163,9 +190,7 @@ public with sharing class TechProfile360Controller {
         if(String.isBlank(input)) return '';
         List<String> words = input.toLowerCase().split('\\s+');
         List<String> properWords = new List<String>();
-        for(String w : words) {
-            if(w.length() > 0) properWords.add(w.substring(0,1).toUpperCase() + w.substring(1));
-        }
+        for(String w : words) if(w.length() > 0) properWords.add(w.substring(0,1).toUpperCase() + w.substring(1));
         return String.join(properWords, ' ');
     }
 
