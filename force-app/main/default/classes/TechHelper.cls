@@ -66,14 +66,30 @@ public WITHOUT SHARING class TechHelper {
                     for(Integer j=0; j<prods.size(); j++) {
                         SObject p = prods[j];
                         String d = ((String)p.get('ssot__Description__c') ?? '').toLowerCase();
-                        String currentCat = d.contains('solar') ? 'Solares' : (d.contains('contacto') ? 'LentesContacto' : 'Oftalmicos');
                         
-                        if(i == 0 && j == 0) lastCat = currentCat == 'LentesContacto' ? 'Lentes de Contacto' : currentCat;
+                        // Lógica de categorización mejorada
+                        String currentCat = 'Oftálmicos';
+                        if(d.contains('solar') || d.contains('sun')) {
+                            currentCat = 'Solares';
+                        } else if(d.contains('contacto') || d.contains(' l.c') || d.contains(' lc') || d.contains('pupilente')) {
+                            currentCat = 'Lentes de Contacto';
+                        }
+
+                        // Para la orden más reciente (i=0), priorizamos categorías específicas sobre el default
+                        if(i == 0) {
+                            if(lastCat == 'N/A' || lastCat == 'Oftálmicos') {
+                                lastCat = currentCat;
+                            }
+                        }
 
                         if(isEcom) {
-                            if(currentCat == 'Solares') eSolares++; else if(currentCat == 'LentesContacto') eLc++; else eOft++;
+                            if(currentCat == 'Solares') eSolares++; 
+                            else if(currentCat == 'Lentes de Contacto') eLc++; 
+                            else eOft++;
                         } else {
-                            if(currentCat == 'Solares') solares++; else if(currentCat == 'LentesContacto') lc++; else oftalmicos++;
+                            if(currentCat == 'Solares') solares++; 
+                            else if(currentCat == 'Lentes de Contacto') lc++; 
+                            else oftalmicos++;
                         }
                         ordProds.add(new Map<String, Object>{'nombre'=>p.get('ssot__Description__c'), 'sku'=>p.get('ssot__ProductId__c'), 'cantidad'=>p.get('ssot__OrderedQuantity__c'), 'precioTotal'=>p.get('ssot__TotalLineAmount__c')});
                     }

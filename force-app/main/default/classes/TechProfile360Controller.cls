@@ -60,12 +60,15 @@ public with sharing class TechProfile360Controller {
         Map<String, String> bindMap = new Map<String, String>();
         for(Integer i=0; i<tokens.size(); i++) bindMap.put('p'+i, '%' + tokens[i].toUpperCase() + '%');
 
-        // --- FASE 1: BÚSQUEDA ESPECIALIZADA (EMAIL O AND) ---
+        // --- FASE 1: BÚSQUEDA ESPECIALIZADA ---
         List<UnifiedssotIndividualDev2__dlm> precisionResults = new List<UnifiedssotIndividualDev2__dlm>();
         if(isEmail) {
-            String emailTerm = '%' + term.toUpperCase() + '%';
-            bindMap.put('emailTerm', emailTerm);
-            precisionResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE Email__c LIKE :emailTerm LIMIT 200', bindMap, AccessLevel.USER_MODE);
+            // AJUSTE: Búsqueda flexible de email (soporta minúsculas/mayúsculas nativamente)
+            String emailPat = '%' + term + '%';
+            String emailPatUpper = '%' + term.toUpperCase() + '%';
+            bindMap.put('emailPat', emailPat);
+            bindMap.put('emailPatUpper', emailPatUpper);
+            precisionResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE Email__c LIKE :emailPat OR Email__c LIKE :emailPatUpper LIMIT 200', bindMap, AccessLevel.USER_MODE);
         } else {
             String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
             List<String> andConds = new List<String>();
