@@ -17,11 +17,20 @@ public with sharing class TechProfile360Controller {
         Map<String, Object> res = new Map<String, Object>();
         try {
             // 1. Identificadores y Perfil (Restauración de Sidebar)
-            List<UnifiedssotIndividualDev2__dlm> profs = [SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, Id_TuoTempo__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c=:uid OR Id_POS__c=:uid LIMIT 1];
+            List<UnifiedssotIndividualDev2__dlm> profs = [SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, Id_TuoTempo__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c, ssot__Id__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c=:uid OR Id_POS__c=:uid LIMIT 1];
             String pos = ''; String em = ''; String tt = '';
             if(!profs.isEmpty()) {
-                UnifiedssotIndividualDev2__dlm r = profs[0]; pos = r.Id_POS__c; em = r.Email__c; tt = r.Id_TuoTempo__c;
-                res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'age'=>calculateAge(r.FECHA_NACIMIENTO_dt__c), 'phone'=>'N/A'});
+                UnifiedssotIndividualDev2__dlm r = profs[0]; pos = r.Id_POS__c; em = r.Email__c; tt = r.Id_TuoTempo__c; String uniId = r.ssot__Id__c;
+                
+                // Buscamos el teléfono real
+                String realPhone = 'N/A';
+                try {
+                    for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__PartyId__c = \''+uniId+'\' LIMIT 1')) {
+                        realPhone = (String)p.get('ssot__TelephoneNumber__c');
+                    }
+                } catch(Exception e) {}
+
+                res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'age'=>calculateAge(r.FECHA_NACIMIENTO_dt__c), 'phone'=>realPhone});
             }
             if(Test.isRunningTest()){ pos='T'; em='T'; tt='T'; } if(String.isBlank(pos)) return res;
 
@@ -115,7 +124,7 @@ public with sharing class TechProfile360Controller {
         if (term.replaceAll('[^0-9]', '').length() >= 7) {
             String phoneTerm = '%' + term.replaceAll('[^0-9]', '') + '%';
             try {
-                for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 20')) {
+                for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 200')) {
                     String indId = (String)p.get('ssot__PartyId__c');
                     if(String.isNotBlank(indId)) individualIdsFromPhone.add(indId);
                 }
@@ -137,7 +146,7 @@ public with sharing class TechProfile360Controller {
                        OR (ssot__FirstName__c LIKE :f AND ssot__LastName__c LIKE :l)
                        OR (ssot__FirstName__c LIKE :fU AND ssot__LastName__c LIKE :lU)
                        OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
-                    LIMIT 20];
+                    LIMIT 200];
         } else {
             mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
                     FROM UnifiedssotIndividualDev2__dlm 
@@ -145,7 +154,7 @@ public with sharing class TechProfile360Controller {
                        OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
                        OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
                        OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
-                    LIMIT 20];
+                    LIMIT 200];
         }
 
         // 3. Obtenemos los teléfonos de TODOS los resultados encontrados

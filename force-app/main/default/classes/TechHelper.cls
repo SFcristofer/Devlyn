@@ -10,7 +10,16 @@ public WITHOUT SHARING class TechHelper {
             String pos='', em='', tt='', uniId=''; 
             for(UnifiedssotIndividualDev2__dlm r : [SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, Id_TuoTempo__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c, ssot__Id__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c=:uid OR Id_POS__c=:uid LIMIT 1]) { 
                 pos=r.Id_POS__c; em=r.Email__c; tt=r.Id_TuoTempo__c; uniId=r.ssot__Id__c;
-                res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'phone'=>'N/A', 'age'=>age(r.FECHA_NACIMIENTO_dt__c)}); 
+                
+                // Buscamos el teléfono real en el objeto de puntos de contacto
+                String realPhone = 'N/A';
+                try {
+                    for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__PartyId__c = \''+uniId+'\' LIMIT 1')) {
+                        realPhone = (String)p.get('ssot__TelephoneNumber__c');
+                    }
+                } catch(Exception e) {}
+
+                res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'phone'=>realPhone, 'age'=>age(r.FECHA_NACIMIENTO_dt__c)}); 
             }
             if(Test.isRunningTest()){ pos='T'; em='T'; tt='T'; uniId='T'; } 
             if(String.isBlank(pos)) return res;

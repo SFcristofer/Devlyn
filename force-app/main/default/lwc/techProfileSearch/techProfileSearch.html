@@ -13,7 +13,7 @@
                     <lightning-input 
                         type="search" 
                         label="Paciente"
-                        placeholder="Buscar por nombre, correo electrónico, teléfono, POS ID or o código…" 
+                        placeholder="Buscar por nombre, correo electrónico, teléfono, POS ID" 
                         onchange={handleSearchChange}
                         onkeyup={handleKeyUp}
                         value={searchTerm}
@@ -32,18 +32,42 @@
                 </div>
             </div>
 
-            <!-- Tabla de Resultados -->
+            <!-- Tabla de Resultados con Paginación -->
             <template if:true={hasResults}>
                 <div class="results-section">
                     <div class="results-table-wrapper">
                         <lightning-datatable
                             key-field="ssot__Id__c"
-                            data={searchResults}
+                            data={pagedResults}
                             columns={columns}
                             max-row-selection="1"
                             onrowselection={handleRowSelection}
                             class="custom-datatable">
                         </lightning-datatable>
+                    </div>
+
+                    <!-- Controles de Paginación -->
+                    <div class="pagination-bar">
+                        <div class="pagination-info">
+                            Mostrando página {currentPage} de {totalPages} ({searchResults.length} resultados)
+                        </div>
+                        <div class="pagination-buttons">
+                            <lightning-button-icon 
+                                icon-name="utility:chevronleft" 
+                                onclick={handlePrevious} 
+                                disabled={isFirstPage}
+                                variant="border-filled"
+                                alternative-text="Anterior">
+                            </lightning-button-icon>
+                            <span class="page-indicator">{currentPage}</span>
+                            <lightning-button-icon 
+                                icon-name="utility:chevronright" 
+                                onclick={handleNext} 
+                                disabled={isLastPage}
+                                variant="border-filled"
+                                alternative-text="Siguiente">
+                            </lightning-button-icon>
+                        </div>
                     </div>
                 </div>
             </template>

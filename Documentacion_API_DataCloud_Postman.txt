@@ -1,0 +1,78 @@
+==========================================================================
+DOCUMENTACIÓN DE INTEGRACIÓN: DATA CLOUD QUERY API - PROYECTO DEVLYN
+==========================================================================
+
+Este documento detalla los endpoints, estructura de solicitudes (Body) 
+y respuestas para la consulta de información del Perfil Único 360 
+desde sistemas externos utilizando Postman.
+
+--------------------------------------------------------------------------
+1. CONFIGURACIÓN DE CONEXIÓN (POSTMAN)
+--------------------------------------------------------------------------
+MÉTODO: POST
+ENDPOINT: https://{{TU_INSTANCIA}}.my.salesforce.com/services/data/v60.0/ssot/queryv2
+
+HEADERS:
+- Authorization: Bearer {{ACCESS_TOKEN}}
+- Content-Type: application/json
+
+--------------------------------------------------------------------------
+2. CONSULTAS POR MÓDULO (SQL)
+--------------------------------------------------------------------------
+
+A) MÓDULO DE ÓRDENES Y VENTAS (RETAIL / ECOMMERCE)
+--------------------------------------------------
+Objetivo: Recuperar historial de compras consolidado.
+BODY (JSON):
+{
+    "sql": "SELECT ssot__Id__c, ssot__OrderNumber__c, ssot__TotalAmount__c, ssot__CreatedDate__c, ssot__SalesStoreId__c FROM ssot__SalesOrder__dlm WHERE ssot__SoldToCustomerId__c = 'ID_DEL_POS' ORDER BY ssot__CreatedDate__c DESC"
+}
+
+B) MÓDULO DE EXPEDIENTE MÉDICO (DIAGNÓSTICO)
+--------------------------------------------
+Objetivo: Obtener la graduación y salud visual más reciente.
+BODY (JSON):
+{
+    "sql": "SELECT MIOPIA__c, ASTIGMATISMO__c, HIPERMETROPIA__c, FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm WHERE ID_CLIENTE__c = 'ID_DEL_POS' ORDER BY FECHA__c DESC LIMIT 1"
+}
+
+C) MÓDULO DE MARKETING (ENGAGEMENT)
+-----------------------------------
+Objetivo: Ver interacciones con campañas de Email.
+BODY (JSON):
+{
+    "sql": "SELECT ssot__SubjectLineTxt__c, ssot__EngagementDateTm__c, ssot__Id__c FROM ssot__EmailEngagement__dlm WHERE ssot__IndividualId__c = 'ID_UNIFICADO_O_EMAIL' ORDER BY ssot__EngagementDateTm__c DESC LIMIT 10"
+}
+
+D) MÓDULO DE CITAS (TUOTEMPO)
+-----------------------------
+Objetivo: Consultar agenda de citas programadas.
+BODY (JSON):
+{
+    "sql": "SELECT start_date__c, activityTitle__c, areaTitle__c, estatus_cita__c FROM TUOTEMPO_CITA__dlm WHERE memberid__c = 'ID_TUOTEMPO' ORDER BY start_date__c DESC"
+}
+
+--------------------------------------------------------------------------
+3. ESTRUCTURA DE RESPUESTA ESTÁNDAR (JSON)
+--------------------------------------------------------------------------
+Independientemente de la consulta, Data Cloud responderá con el siguiente formato:
+
+{
+    "data": [
+        {
+            "campo_solicitado_1": "Valor",
+            "campo_solicitado_2": 123.45
+        }
+    ],
+    "startTime": "2024-02-26T...",
+    "endTime": "2024-02-26T...",
+    "rowCount": 1,
+    "queryId": "uuid-1234-5678"
+}
+
+--------------------------------------------------------------------------
+NOTAS TÉCNICAS:
+- Los objetos con sufijo __dlm corresponden al Data Model unificado.
+- Se recomienda el uso de LIMIT para optimizar el tiempo de respuesta.
+- El ID_DEL_POS debe ser el identificador único del cliente en el sistema origen.
+==========================================================================

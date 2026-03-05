@@ -13,6 +13,11 @@ export default class TechProfileSearch extends LightningElement {
     @track searchTerm = '';
     @track searchResults = [];
     @track isSearching = false;
+    
+    // Paginación
+    @track currentPage = 1;
+    pageSize = 15;
+    
     columns = COLUMNS;
 
     handleSearchChange(event) {
@@ -28,6 +33,7 @@ export default class TechProfileSearch extends LightningElement {
     handleSearchAction() {
         if (this.searchTerm && this.searchTerm.length >= 2) {
             this.isSearching = true;
+            this.currentPage = 1; // Reiniciar a la primera página en nueva búsqueda
             searchProfilesGlobal({ 
                 term: this.searchTerm
             })
@@ -39,6 +45,37 @@ export default class TechProfileSearch extends LightningElement {
                     console.error('Search Error:', error);
                     this.isSearching = false;
                 });
+        }
+    }
+
+    // Getters para Paginación
+    get pagedResults() {
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = this.currentPage * this.pageSize;
+        return this.searchResults.slice(start, end);
+    }
+
+    get totalPages() {
+        return Math.ceil(this.searchResults.length / this.pageSize) || 1;
+    }
+
+    get isFirstPage() {
+        return this.currentPage === 1;
+    }
+
+    get isLastPage() {
+        return this.currentPage >= this.totalPages;
+    }
+
+    handlePrevious() {
+        if (this.currentPage > 1) {
+            this.currentPage -= 1;
+        }
+    }
+
+    handleNext() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage += 1;
         }
     }
 
