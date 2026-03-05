@@ -16,25 +16,22 @@ public with sharing class TechProfile360Controller {
     public static Map<String, Object> getProfileData(String uid) {
         Map<String, Object> res = new Map<String, Object>();
         try {
-            // 1. Identificadores y Perfil (Restauración de Sidebar)
+            // 1. Identificadores y Perfil
             List<UnifiedssotIndividualDev2__dlm> profs = [SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, Id_TuoTempo__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c, ssot__Id__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c=:uid OR Id_POS__c=:uid LIMIT 1];
             String pos = ''; String em = ''; String tt = '';
             if(!profs.isEmpty()) {
                 UnifiedssotIndividualDev2__dlm r = profs[0]; pos = r.Id_POS__c; em = r.Email__c; tt = r.Id_TuoTempo__c; String uniId = r.ssot__Id__c;
-                
-                // Buscamos el teléfono real
                 String realPhone = 'N/A';
                 try {
                     for(SObject p : Database.query('SELECT ssot__TelephoneNumber__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__PartyId__c = \''+uniId+'\' LIMIT 1')) {
                         realPhone = (String)p.get('ssot__TelephoneNumber__c');
                     }
                 } catch(Exception e) {}
-
                 res.put('profile', new Map<String, Object>{'firstName'=>r.ssot__FirstName__c, 'lastName'=>r.ssot__LastName__c, 'idPos'=>pos, 'email'=>em, 'cp'=>r.CODIGO_POSTAL__c, 'gender'=>r.ssot__GenderId__c, 'age'=>calculateAge(r.FECHA_NACIMIENTO_dt__c), 'phone'=>realPhone});
             }
             if(Test.isRunningTest()){ pos='T'; em='T'; tt='T'; } if(String.isBlank(pos)) return res;
 
-            // 2. Órdenes y Métricas (Lógica Compleja de Canales y Categorías)
+            // 2. Órdenes y Métricas
             Decimal totalSales = 0; Decimal retailTotal = 0; Decimal ecomTotal = 0; Date lastDate = null;
             Map<String, Integer> retCat = new Map<String, Integer>{'Solares'=>0, 'Oftalmicos'=>0, 'LentesContacto'=>0};
             Map<String, Integer> ecomCat = new Map<String, Integer>{'Solares'=>0, 'Oftalmicos'=>0, 'LentesContacto'=>0};
@@ -72,7 +69,7 @@ public with sharing class TechProfile360Controller {
             res.put('orders', ordersList);
             res.put('metrics', new Map<String, Object>{'totalSales'=>totalSales, 'orderCount'=>rawO.size(), 'avgTicket'=>(rawO.size()>0?(totalSales/rawO.size()).setScale(2):0), 'daysSinceLastPurchase'=>(lastDate!=null?lastDate.daysBetween(Date.today()):0), 'retailTotal'=>retailTotal, 'ecommerceTotal'=>ecomTotal, 'retailCategories'=>retCat, 'ecommerceCategories'=>ecomCat, 'lastBranch'=>lastBranch, 'lastCategory'=>lastCategory});
 
-            // 3. Marketing (Historial y Scores)
+            // 3. Marketing
             Map<String, Map<String, Object>> cm = new Map<String, Map<String, Object>>();
             List<SObject> engs = (Test.isRunningTest() && mockEngagements!=null) ? mockEngagements : Database.query('SELECT ssot__SubjectLineTxt__c, ssot__EngagementDateTm__c, Id FROM ssot__EmailEngagement__dlm WHERE ssot__IndividualId__c IN (\''+uid+'\',\''+pos+'\',\''+em+'\') ORDER BY ssot__EngagementDateTm__c DESC LIMIT 20');
             for(SObject e : engs) {
@@ -82,7 +79,7 @@ public with sharing class TechProfile360Controller {
             }
             res.put('campaigns', cm.values());
 
-            // 4. Expediente Médico (LAS 7 SECCIONES)
+            // 4. Expediente Médico
             Map<String, Object> med = new Map<String, Object>();
             try {
                 for(SObject d : Database.query('SELECT MIOPIA__c, FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm WHERE ID_CLIENTE__c=\''+pos+'\' ORDER BY FECHA__c DESC LIMIT 1')) { med.put('diagnosis', d); med.put('lastExam', d.get('FECHA__c')); }
@@ -92,11 +89,10 @@ public with sharing class TechProfile360Controller {
                 List<Map<String, Object>> grads = new List<Map<String, Object>>();
                 for(SObject g : Database.query('SELECT FECHA__c, ID_GRADPED__c, VALOR1__c FROM POS_POS_CLIENTE_GRAD_PEDIDO_70871439__dlm WHERE ID_CLIENTE__c=\''+pos+'\' LIMIT 10')) { grads.add(new Map<String, Object>{'id'=>g.get('Id'), 'fecha'=>g.get('FECHA__c'), 'sku'=>'Lente', 'esfera'=>g.get('VALOR1__c')}); }
                 med.put('graduations', grads);
-                med.put('family', new List<Object>());
             } catch(Exception ex) {}
             res.put('medical', med);
 
-            // 5. Citas, Cotizaciones y Suscripciones
+            // 5. Citas y Cotizaciones
             if(String.isNotBlank(tt)) {
                 List<Object> appts = new List<Object>();
                 for(SObject c : Database.query('SELECT start_date__c, activityTitle__c FROM TUOTEMPO_CITA__dlm WHERE memberid__c=\''+tt+'\' LIMIT 10')) appts.add(new Map<String, Object>{'tipo'=>c.get('activityTitle__c'), 'inicio'=>c.get('start_date__c'), 'status'=>'Confirmada'});
@@ -114,53 +110,41 @@ public with sharing class TechProfile360Controller {
     public static List<Map<String, Object>> searchProfilesGlobal(String term) {
         if (String.isBlank(term)) return new List<Map<String, Object>>();
         term = term.trim();
-        String q = '%' + term + '%';
-        String qU = q.toUpperCase();
-        String qL = q.toLowerCase();
+        List<String> tokens = term.split('\\s+');
         
-        Set<String> individualIdsFromPhone = new Set<String>();
-
-        // 1. Si el término parece un teléfono, buscamos IDs de individuos asociados
-        if (term.replaceAll('[^0-9]', '').length() >= 7) {
-            String phoneTerm = '%' + term.replaceAll('[^0-9]', '') + '%';
-            try {
-                for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 200')) {
-                    String indId = (String)p.get('ssot__PartyId__c');
-                    if(String.isNotBlank(indId)) individualIdsFromPhone.add(indId);
-                }
-            } catch(Exception e) {}
+        Set<String> idsFromPhones = new Set<String>();
+        for(String t : tokens) {
+            String cleanT = t.replaceAll('[^0-9]', '');
+            if (cleanT.length() >= 7) {
+                String phoneTerm = '%' + cleanT + '%';
+                try {
+                    for(SObject p : Database.query('SELECT ssot__PartyId__c FROM UnifiedssotContactPointPhoneDev2__dlm WHERE ssot__TelephoneNumber__c LIKE :phoneTerm LIMIT 200')) {
+                        String indId = (String)p.get('ssot__PartyId__c');
+                        if(String.isNotBlank(indId)) idsFromPhones.add(indId);
+                    }
+                } catch(Exception e) {}
+            }
         }
 
-        // 2. Búsqueda principal (Nombres, Email, POS o IDs encontrados por teléfono)
-        List<UnifiedssotIndividualDev2__dlm> mainResults;
-        List<String> parts = term.split('\\s+');
-        if (parts.size() >= 2) {
-            String f = '%' + parts[0] + '%';
-            String l = '%' + parts[parts.size()-1] + '%';
-            String fU = f.toUpperCase(); String lU = l.toUpperCase();
-            mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
-                    FROM UnifiedssotIndividualDev2__dlm 
-                    WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q 
-                       OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
-                       OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
-                       OR (ssot__FirstName__c LIKE :f AND ssot__LastName__c LIKE :l)
-                       OR (ssot__FirstName__c LIKE :fU AND ssot__LastName__c LIKE :lU)
-                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
-                    LIMIT 200];
-        } else {
-            mainResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
-                    FROM UnifiedssotIndividualDev2__dlm 
-                    WHERE ssot__FirstName__c LIKE :q OR ssot__LastName__c LIKE :q 
-                       OR ssot__FirstName__c LIKE :qU OR ssot__LastName__c LIKE :qU
-                       OR ssot__FirstName__c LIKE :qL OR ssot__LastName__c LIKE :qL
-                       OR Email__c LIKE :q OR Id_POS__c LIKE :q OR ssot__Id__c IN :individualIdsFromPhone
-                    LIMIT 200];
+        String query = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
+        List<String> conditions = new List<String>();
+        for(String t : tokens) {
+            String safeT = String.escapeSingleQuotes(t);
+            String pattern = '%' + safeT + '%';
+            String patternU = pattern.toUpperCase();
+            String patternL = pattern.toLowerCase();
+            String tokenCond = '(ssot__FirstName__c LIKE \'' + pattern + '\' OR ssot__FirstName__c LIKE \'' + patternU + '\' OR ssot__FirstName__c LIKE \'' + patternL + '\' OR ' +
+                               'ssot__LastName__c LIKE \'' + pattern + '\' OR ssot__LastName__c LIKE \'' + patternU + '\' OR ssot__LastName__c LIKE \'' + patternL + '\' OR ' +
+                               'Email__c LIKE \'' + pattern + '\' OR Id_POS__c LIKE \'' + pattern + '\'';
+            if(t.replaceAll('[^0-9]', '').length() >= 7 && !idsFromPhones.isEmpty()) tokenCond += ' OR ssot__Id__c IN :idsFromPhones';
+            tokenCond += ')';
+            conditions.add(tokenCond);
         }
+        query += String.join(conditions, ' AND ') + ' LIMIT 200';
+        List<UnifiedssotIndividualDev2__dlm> mainResults = Database.query(query);
 
-        // 3. Obtenemos los teléfonos de TODOS los resultados encontrados
         Set<String> finalIds = new Set<String>();
         for(UnifiedssotIndividualDev2__dlm r : mainResults) finalIds.add(r.ssot__Id__c);
-        
         Map<String, String> phoneMap = new Map<String, String>();
         if(!finalIds.isEmpty()) {
             try {
@@ -170,9 +154,16 @@ public with sharing class TechProfile360Controller {
             } catch(Exception e) {}
         }
 
-        // 4. Consolidación final
-        List<Map<String, Object>> finalResults = new List<Map<String, Object>>();
+        // Lógica de Scoring por Flujo de Nombre Completo
+        List<SearchResultWrapper> wrappedResults = new List<SearchResultWrapper>();
         for(UnifiedssotIndividualDev2__dlm r : mainResults) {
+            wrappedResults.add(new SearchResultWrapper(r, tokens, phoneMap.get(r.ssot__Id__c)));
+        }
+        wrappedResults.sort();
+
+        List<Map<String, Object>> finalResults = new List<Map<String, Object>>();
+        for(SearchResultWrapper w : wrappedResults) {
+            UnifiedssotIndividualDev2__dlm r = w.record;
             Map<String, Object> m = new Map<String, Object>();
             m.put('ssot__Id__c', r.ssot__Id__c);
             m.put('ssot__FirstName__c', r.ssot__FirstName__c);
@@ -183,6 +174,73 @@ public with sharing class TechProfile360Controller {
             finalResults.add(m);
         }
         return finalResults;
+    }
+
+    public class SearchResultWrapper implements Comparable {
+        public UnifiedssotIndividualDev2__dlm record;
+        public Integer score;
+
+        public SearchResultWrapper(UnifiedssotIndividualDev2__dlm r, List<String> tokens, String phone) {
+            this.record = r;
+            this.score = calculateScore(r, tokens, phone);
+        }
+
+        private Integer calculateScore(UnifiedssotIndividualDev2__dlm r, List<String> tokens, String phone) {
+            Integer s = 0;
+            String fn = (r.ssot__FirstName__c ?? '').toUpperCase();
+            String ln = (r.ssot__LastName__c ?? '').toUpperCase();
+            String fullName = (fn + ' ' + ln).replaceAll('\\s+', ' ').trim();
+            List<String> nameParts = fullName.split('\\s+');
+
+            // 1. Bono de Secuencia Perfecta (ORDEN CRÍTICO)
+            // Analizamos si los tokens aparecen en el nombre en el orden exacto y seguido
+            Integer lastMatchedIdx = -1;
+            Integer consecutiveMatches = 0;
+            
+            for(String t : tokens) {
+                String tu = t.toUpperCase();
+                Boolean foundInThisToken = false;
+                
+                for(Integer i=0; i<nameParts.size(); i++) {
+                    if(nameParts[i] == tu) {
+                        s += 300; // Match exacto de palabra
+                        if(i == lastMatchedIdx + 1) {
+                            s += 500; // BONO DE FLUJO: La palabra sigue a la anterior
+                            consecutiveMatches++;
+                        }
+                        lastMatchedIdx = i;
+                        foundInThisToken = true;
+                        break;
+                    } else if(nameParts[i].startsWith(tu)) {
+                        s += 100;
+                        lastMatchedIdx = i;
+                        foundInThisToken = true;
+                        break;
+                    }
+                }
+            }
+
+            // 2. Bono por Inicio de Nombre (Si la búsqueda empieza como el nombre)
+            if(!tokens.isEmpty() && fn.startsWith(tokens[0].toUpperCase())) s += 1000;
+
+            // 3. Pequeños bonos por otros campos
+            for(String t : tokens) {
+                String tu = t.toUpperCase();
+                if((r.Email__c ?? '').toUpperCase().contains(tu)) s += 10;
+                if((r.Id_POS__c ?? '').toUpperCase().contains(tu)) s += 10;
+                if(phone != null && phone.contains(tu)) s += 10;
+            }
+
+            return s;
+        }
+
+        public Integer compareTo(Object compareTo) {
+            SearchResultWrapper other = (SearchResultWrapper)compareTo;
+            if (this.score == other.score) {
+                return (this.record.ssot__FirstName__c ?? '').compareTo(other.record.ssot__FirstName__c ?? '');
+            }
+            return (this.score > other.score) ? -1 : 1; 
+        }
     }
 
     private static Integer calculateAge(Date dob) { if(dob==null) return 0; return dob.daysBetween(Date.today())/365; }
