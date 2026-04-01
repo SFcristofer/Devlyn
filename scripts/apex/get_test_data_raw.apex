@@ -1,10 +1,13 @@
-List<ssot__Individual__dlm> samples = [
-    SELECT ssot__FirstName__c, ssot__LastName__c, ssot__Id__c 
-    FROM ssot__Individual__dlm 
-    WHERE ssot__FirstName__c != null 
-    LIMIT 5
-];
+// Buscamos cualquier cliente que tenga al menos un diagnóstico registrado
+String sql = 'SELECT diag.ID_CLIENTE__c, diag.MIOPIA__c, diag.ASTIGMATISMO__c, diag.HIPERMETROPIA__c, diag.PRESBICIA__c, diag.FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm AS diag LIMIT 1';
 
-for (ssot__Individual__dlm p : samples) {
-    System.debug('INDIVIDUAL_DATA: Name: ' + p.ssot__FirstName__c + ' ' + p.ssot__LastName__c + ' | ID: ' + p.ssot__Id__c);
+try {
+    List<Map<String, Object>> results = TechProfile360Service.executeDataCloudQuery(sql);
+    if (results.isEmpty()) {
+        System.debug('AVISO: La tabla de diagnósticos parece estar vacía en esta instancia.');
+    } else {
+        System.debug('REGISTRO_ENCONTRADO: ' + JSON.serializePretty(results[0]));
+    }
+} catch (Exception e) {
+    System.debug('ERROR: ' + e.getMessage());
 }

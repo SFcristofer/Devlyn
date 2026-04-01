@@ -1,0 +1,127 @@
+==========================================================================
+DOCUMENTACIÓN DE CONSULTAS DATA CLOUD - PROYECTO DEVLYN 360
+==========================================================================
+Este documento detalla las consultas SOQL realizadas a los Data Model Objects (DMO)
+y la estructura de respuesta que procesa el componente LWC.
+
+--------------------------------------------------------------------------
+1. BÚSQUEDA GLOBAL DE PERFILES (Search Engine)
+--------------------------------------------------------------------------
+Clase: TechProfile360Controller.cls
+Objeto: UnifiedssotIndividualDev2__dlm
+
+QUERY SOQL:
+SELECT ssot__FirstName__c, ssot__LastName__c, Email__c, Id_POS__c, ssot__Id__c, ssot__GenderId__c, CODIGO_POSTAL__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE (ssot__FirstName__c LIKE :term OR ssot__LastName__c LIKE :term OR Email__c = :term OR Id_POS__c = :term)
+LIMIT 20
+
+RESPUESTA ESPERADA (Array de Objetos):
+[
+  {
+    "unifiedId": "9fac96ec2ab5de94a10395ccc712f45f",
+    "firstName": "MELISA",
+    "lastName": "LOPEZ FERIA",
+    "email": "melisa@email.com",
+    "idPos": "11268754",
+    "zipCode": "01234",
+    "gender": "Mujer"
+  }
+]
+
+--------------------------------------------------------------------------
+2. DETALLE DE PERFIL Y MÉTRICAS (Ficha 360)
+--------------------------------------------------------------------------
+Clase: TechHelper.cls
+Objeto: UnifiedssotIndividualDev2__dlm
+
+QUERY SOQL:
+SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, FECHA_NACIMIENTO_dt__c, ssot__GenderId__c, CODIGO_POSTAL__c, ssot__Id__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE ssot__Id__c = :uid OR Id_POS__c = :uid LIMIT 1
+
+RESPUESTA ESPERADA:
+{
+  "profile": {
+    "firstName": "MELISA",
+    "lastName": "LOPEZ FERIA",
+    "age": 28,
+    "phone": "5512345678",
+    "idPos": "11268754"
+  }
+}
+
+--------------------------------------------------------------------------
+3. HISTORIAL DE VENTAS Y PRODUCTOS
+--------------------------------------------------------------------------
+Objetos: ssot__SalesOrder__dlm y ssot__SalesOrderProduct__dlm
+
+QUERY ÓRDENES:
+SELECT ssot__Id__c, ssot__OrderNumber__c, ssot__TotalAmount__c, ssot__CreatedDate__c, ssot__SalesStoreId__c 
+FROM ssot__SalesOrder__dlm 
+WHERE ssot__SoldToCustomerId__c = :posId ORDER BY ssot__CreatedDate__c DESC LIMIT 20
+
+QUERY PRODUCTOS (Por cada Orden):
+SELECT ssot__Description__c, ssot__ProductId__c, ssot__OrderedQuantity__c, ssot__TotalLineAmount__c 
+FROM ssot__SalesOrderProduct__dlm 
+WHERE ssot__SalesOrderId__c = :orderId
+
+RESPUESTA ESPERADA:
+"orders": [
+  {
+    "ordenId": "ORD-999",
+    "total": 2500.50,
+    "fechaCompra": "2026-03-01",
+    "sucursal": "Sucursal 123",
+    "productos": [
+      { "nombre": "Armazon Ray-Ban", "cantidad": 1, "precioTotal": 2500.50 }
+    ]
+  }
+]
+
+--------------------------------------------------------------------------
+4. EXPEDIENTE MÉDICO (Diagnóstico y Driver Visual)
+--------------------------------------------------------------------------
+Objetos: POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm y POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm
+
+QUERY DIAGNÓSTICO:
+SELECT FECHA__c, ASTIGMATISMO__c, MIOPIA__c, HIPERMETROPIA__c, PRESBICIA__c 
+FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm 
+WHERE ID_CLIENTE__c = :posId ORDER BY FECHA__c DESC LIMIT 1
+
+QUERY DRIVER VISUAL:
+SELECT NIVEL_VISION__c, TIPO_USUARIO__c, SOLUCION_VISUAL_BUSCA__c, VALOR_RAZON_VISITA__c 
+FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm 
+WHERE ID_CLIENTE__c = :posId ORDER BY FECHA__c DESC LIMIT 1
+
+RESPUESTA ESPERADA:
+"medical": {
+  "lastDiagnosisDate": "2026-03-05",
+  "diagnoses": ["Miopía: 1.00", "Astigmatismo: 0.50"],
+  "visualDriver": {
+    "NIVEL_VISION__c": "Baja",
+    "TIPO_USUARIO__c": "Frecuente",
+    "SOLUCION_VISUAL_BUSCA__c": "Lentes Progresivos"
+  }
+}
+
+--------------------------------------------------------------------------
+5. SUSCRIPCIONES (VTEX)
+--------------------------------------------------------------------------
+Objeto: VTEX_Subscription__dlm
+
+QUERY SOQL:
+SELECT plan_id__c, status__c, nextPurchaseDate__c, frequency_periodicity__c, createdAt__c 
+FROM VTEX_Subscription__dlm 
+WHERE customerId__c = :vtexId LIMIT 10
+
+RESPUESTA ESPERADA:
+"subscriptions": [
+  {
+    "nombre": "vtex.subscription.semestral",
+    "status": "ACTIVE",
+    "frecuencia": "6 meses",
+    "proximaCompra": "2026-09-01"
+  }
+]
+==========================================================================

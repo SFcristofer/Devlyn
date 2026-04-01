@@ -1,30 +1,23 @@
-try {
-    System.debug('--- AUDITORIA DEFINITIVA DE PRESUPUESTOS ---');
-    
-    // 1. Buscamos en SalesOrder registros con cualquier DataSourceId
-    String q = 'SELECT ssot__DataSourceId__c, ssot__SoldToCustomerId__c, ssot__OrderNumber__c FROM ssot__SalesOrder__dlm WHERE ssot__DataSourceId__c != null LIMIT 50';
-    List<SObject> orders = Database.query(q);
-    
-    Map<String, Integer> sourceCounts = new Map<String, Integer>();
-    List<String> validIds = new List<String>();
-    
-    for(SObject o : orders) {
-        String src = (String)o.get('ssot__DataSourceId__c');
-        sourceCounts.put(src, (sourceCounts.containsKey(src) ? sourceCounts.get(src) + 1 : 1));
-        
-        // Si encontramos tu etiqueta, guardamos el ID para dártelo
-        if(src.contains('PRESUPUESTO')) {
-            validIds.add((String)o.get('ssot__SoldToCustomerId__c') + ' (Order: ' + o.get('ssot__OrderNumber__c') + ')');
+// Script para descubrir el esquema real de Data Cloud sin depender de si hay datos o no
+String[] tables = new String[]{'POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm', 'POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm'};
+
+for(String table : tables) {
+    System.debug('--- ANALIZANDO ESQUEMA DE: ' + table + ' ---');
+    // Usamos el catálogo de metadatos de la API de Query
+    String sql = 'SELECT column_name, data_type FROM information_schema.columns WHERE table_name = \'' + table + '\' ORDER BY ordinal_position';
+    try {
+        List<Map<String, Object>> results = TechProfile360Service.executeDataCloudQuery(sql);
+        if(results.isEmpty()) {
+            System.debug('AVISO: El catálogo no devolvió columnas para ' + table + '. Intentando consulta de estructura...');
+            // Intento alternativo: Obtener metadatos de una consulta vacía
+            // Nota: executeDataCloudQuery usualmente devuelve solo la data, 
+            // pero si falla, el error nos dará pistas.
+        } else {
+            for(Map<String, Object> col : results) {
+                System.debug('CAMPO_REAL: ' + col.get('column_name') + ' (' + col.get('data_type') + ')');
+            }
         }
+    } catch(Exception e) {
+        System.debug('ERROR_METADATOS: ' + e.getMessage());
     }
-    
-    System.debug('ORÍGENES ENCONTRADOS: ' + sourceCounts);
-    
-    if(validIds.isEmpty()) {
-        System.debug('RESULTADO: No se encontraron registros con la etiqueta POS_POS_PRESUPUESTO en los primeros 50.');
-    } else {
-        System.debug('¡ÉXITO! IDs CON PRESUPUESTOS ENCONTRADOS: ' + validIds);
-    }
-} catch(Exception e) {
-    System.debug('ERROR EN AUDITORIA: ' + e.getMessage());
 }

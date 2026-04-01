@@ -1,0 +1,69 @@
+--------------------------------------------------------------------------------
+1. CONSULTA MAESTRA: PERFIL 360, ÚLTIMA COMPRA Y ÚLTIMO EXAMEN
+--------------------------------------------------------------------------------
+Trae Perfil, Última Compra (Canal, Sucursal, Cotización) y Fecha de Examen.
+{
+  "sql": "SELECT link.UnifiedRecordId__c, cust.ssot__FirstName__c, cust.ssot__LastName__c, cust.FECHA_NACIMIENTO_dt__c, cust.CODIGO_POSTAL__c, cust.ssot__GenderId__c, ord.ssot__OrderNumber__c, ord.ssot__CreatedDate__c AS Fecha_Ultima_Compra, ord.Id_Presupuesto__c AS idCotizacion, ord.ssot__SalesStoreId__c AS Sucursal, diag.FECHA__c AS Fecha_Ultimo_Examen_Vista FROM UnifiedssotIndividualDev2__dlm AS cust  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  cust.ssot__Id__c = link.UnifiedRecordId__c  LEFT JOIN  ssot__SalesOrder__dlm AS ord  ON  link.SourceRecordId__c = ord.ssot__SoldToCustomerId__c  LEFT JOIN  POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm AS diag  ON  link.SourceRecordId__c = diag.ID_CLIENTE__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'  ORDER BY  ord.ssot__CreatedDate__c  DESC, diag.FECHA__c  DESC  LIMIT 1"
+}
+--------------------------------------------------------------------------------
+2. ÓRDENES DE VENTA: HISTORIAL DETALLADO (PRODUCTOS, CANTIDAD, PRECIO)
+--------------------------------------------------------------------------------
+Incluye Estatus, Canal, Cotización vinculada y detalle de cada producto.
+{
+  "sql": "SELECT link.UnifiedRecordId__c, ord.ssot__OrderNumber__c, ord.ssot__CreatedDate__c AS Fecha_Compra, ord.ENTREGADO__c AS Estatus, ord.Id_Presupuesto__c AS idCotizacion, ord.ssot__SalesStoreId__c AS Sucursal, prod.ssot__ProductId__c, prod.ssot__Description__c, prod.ssot__OrderedQuantity__c AS Cantidad, prod.ssot__TotalLineAmount__c AS Precio FROM ssot__SalesOrder__dlm AS ord  JOIN  ssot__SalesOrderProduct__dlm AS prod  ON  ord.ssot__Id__c = prod.ssot__SalesOrderId__c  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  ord.ssot__SoldToCustomerId__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'  ORDER BY  ord.ssot__CreatedDate__c  DESC  LIMIT 10"
+}
+--------------------------------------------------------------------------------
+3. HISTORIAL CLÍNICO: GRADUACIÓN (CON LIMPIEZA DE BOOLEANOS)
+--------------------------------------------------------------------------------
+{
+  "sql": "SELECT link.UnifiedRecordId__c, diag.ID_CLIENTE__c, CASE WHEN diag.MIOPIA__c > 0 THEN 'true' ELSE 'false' END AS MIOPIA__c, CASE WHEN diag.ASTIGMATISMO__c > 0 THEN 'true' ELSE 'false' END AS ASTIGMATISMO__c, CASE WHEN diag.HIPERMETROPIA__c > 0 THEN 'true' ELSE 'false' END AS HIPERMETROPIA__c, CASE WHEN diag.PRESBICIA__c > 0 THEN 'true' ELSE 'false' END AS PRESBICIA__c, diag.FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm AS diag  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  diag.ID_CLIENTE__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = '123a5925e3809236b938402f78521c42'  ORDER BY  diag.FECHA__c  DESC  LIMIT 5"
+}
+--------------------------------------------------------------------------------
+4. EXPEDIENTE MÉDICO: ANTECEDENTES Y NOTAS
+--------------------------------------------------------------------------------
+Incluye el campo 'NOTAS' y la conversión de valores 0E-18.
+{
+  "sql": "SELECT link.UnifiedRecordId__c, CASE WHEN ant.DIABETES__c > 0 THEN 'true' ELSE 'false' END AS DIABETES__c, CASE WHEN ant.HIPERTENSION__c > 0 THEN 'true' ELSE 'false' END AS HIPERTENSION__c, ant.NOTAS__c, ant.FECHA__c FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm AS ant  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  ant.ID_CLIENTE__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = '123a5925e3809236b938402f78521c42'  ORDER BY  ant.FECHA__c  DESC  LIMIT 1"
+}
+--------------------------------------------------------------------------------
+5. DRIVER VISUAL: ESTILO DE VIDA, SENTIMIENTO Y SOLUCIONES
+--------------------------------------------------------------------------------
+Incluye Sentimiento de visión, Razón de visita y Soluciones ópticas usadas.
+
+{
+  "sql": "SELECT link.UnifiedRecordId__c, dv.NIVEL_VISION__c, dv.TIPO_USUARIO__c, dv.VALOR_RAZON_VISITA__c, dv.UTILIZA_SOLUCION_VISUAL__c, dv.VALOR_TIEMPO_EXAMEN__c, pp.ACTIVIDAD_AIRE_LIBRE__c, pp.PROTEGE_SUS_OJOS__c, pp.CIRCUNSTANCIA_NOTAS__c FROM UnifiedLinkssotIndividualDev2__dlm AS link  JOIN  POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm AS dv  ON  link.SourceRecordId__c = dv.ID_CLIENTE__c  JOIN  POS_POS_CLIENTE_PREG_PODER__dlm AS pp  ON  link.SourceRecordId__c = pp.ID_CLIENTE__c  WHERE  link.UnifiedRecordId__c = '7ccc29b1fa3b49a3df34aeb226f78043'  LIMIT 1"
+}
+--------------------------------------------------------------------------------
+6. MARKETING: CANAL, JOURNEY Y EINSTEIN SCORE
+--------------------------------------------------------------------------------
+Incluye Canal, Actividad de Journey y el puntaje de propensión de Einstein.
+{
+  "sql": "SELECT link.UnifiedRecordId__c, em.ssot__SubjectLineTxt__c, em.ssot__EngagementChannelId__c AS Canal, em.ssot__MarketJourneyActivityId__c AS Campaign_Journey, em.ssot__EngagementDateTm__c FROM ssot__EmailEngagement__dlm AS em  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  em.ssot__IndividualId__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'  ORDER BY  em.ssot__EngagementDateTm__c  DESC  LIMIT 10"
+}
+--------------------------------------------------------------------------------
+7. CITAS MÉDICAS: TUOTEMPO (DETALLE COMPLETO)
+--------------------------------------------------------------------------------
+Incluye ID de Cita, Fecha Creación, Fecha Fin y Tipo de servicio.
+
+{
+  "sql": "SELECT link.UnifiedRecordId__c, cita.activity_lid__c AS IdCita, cita.activityTitle__c AS Tipo, cita.estatus_cita__c, cita.start_date__c AS Fecha_Inicio, cita.end_date__c AS Fecha_Fin FROM TUOTEMPO_CITA__dlm AS cita  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  cita.memberid__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = '5f4b044b5a691d76503960ef5782d91e'  ORDER BY  cita.start_date__c  DESC  LIMIT 5"
+}
+--------------------------------------------------------------------------------
+8. RESUMEN DE VENTAS POR CANAL (RETAIL VS ECOMMERCE)
+--------------------------------------------------------------------------------
+Muestra el total de ventas acumulado por canal, convirtiendo 0E-18 a 0.
+{
+  "sql": "SELECT link.UnifiedRecordId__c, CAST(SUM(CASE WHEN ord.ssot__SalesStoreId__c LIKE 'WWW%' OR ord.ssot__SalesStoreId__c LIKE 'VTEX%' THEN ord.ssot__TotalAmount__c ELSE 0 END) AS DECIMAL(18,2)) AS Total_Ecommerce, CAST(SUM(CASE WHEN ord.ssot__SalesStoreId__c NOT LIKE 'WWW%' AND ord.ssot__SalesStoreId__c NOT LIKE 'VTEX%' THEN ord.ssot__TotalAmount__c ELSE 0 END) AS DECIMAL(18,2)) AS Total_Retail FROM ssot__SalesOrder__dlm AS ord  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  ord.ssot__SoldToCustomerId__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'  GROUP BY  link.UnifiedRecordId__c"
+}
+--------------------------------------------------------------------------------
+9. SUSCRIPCIONES: DETALLE DE RECURRENCIA (VTEX) (Nota no hay datos de sucripciones para mostrar pero así quedaría la consulta)
+--------------------------------------------------------------------------------
+{
+  "sql": "SELECT link.UnifiedRecordId__c, s.plan_id__c, s.status__c, s.nextPurchaseDate__c, s.frequency_periodicity__c FROM VTEX_Subscription__dlm AS s  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  s.customerId__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'"
+}
+--------------------------------------------------------------------------------
+10. GRADUACIONES DE PEDIDOS (TRANSACCIONAL MÉDICO)
+--------------------------------------------------------------------------------
+{
+  "sql": "SELECT link.UnifiedRecordId__c, grad.VALOR_1__c AS Esfera, grad.VALOR_2__c AS Cilindro, grad.VALOR_3__c AS Eje, grad.FECHA__c FROM POS_POS_GRADUACION_PEDIDO__dlm AS grad  JOIN  ssot__SalesOrder__dlm AS ord  ON  grad.ID_PEDIDO__c = ord.ssot__Id__c  JOIN  UnifiedLinkssotIndividualDev2__dlm AS link  ON  ord.ssot__SoldToCustomerId__c = link.SourceRecordId__c  WHERE  link.UnifiedRecordId__c = 'b1ea12fd3614d5d237578549b0b3f94d'  ORDER BY  grad.FECHA__c  DESC"
+}

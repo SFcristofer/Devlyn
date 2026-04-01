@@ -1,0 +1,76 @@
+/* 
+   SCRIPT DE FORMATEO PARA DATA CLOUD QUERY API V2 (POSTMAN)
+   Proyecto: Devlyn - TechPatient360
+   
+   Instrucciones:
+   1. Abre tu request de consulta en Postman.
+   2. Ve a la pestaña "Tests" (arriba del Body).
+   3. Pega todo este código.
+   4. Haz clic en el botón azul "Send".
+   5. En la sección de respuesta (abajo), haz clic en la pestaña "Visualize".
+   
+   Este script convierte la respuesta desordenada de Data Cloud en una 
+   tabla limpia y un objeto JSON estructurado en la consola.
+*/
+
+const response = pm.response.json();
+
+if (response.data && response.metadata) {
+    // 1. Extraer y ordenar nombres de columnas por su posición (placeInOrder)
+    const columns = Object.keys(response.metadata).sort((a, b) => {
+        return response.metadata[a].placeInOrder - response.metadata[b].placeInOrder;
+    });
+
+    // 2. Mapear datos a objetos JSON legibles
+    const formattedData = response.data.map(row => {
+        let obj = {};
+        columns.forEach((colName, index) => {
+            obj[colName] = row[index];
+        });
+        return obj;
+    });
+
+    // 3. Mostrar en la consola de Postman (Ctrl + Alt + C) para copiar y pegar
+    console.log("--- RESULTADOS FORMATEADOS (JSON) ---");
+    console.log(formattedData);
+
+    // 4. Crear tabla para la pestaña "Visualize" con estilo Devlyn
+    const template = `
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; color: #333; }
+            h2 { color: #00A1E0; border-bottom: 2px solid #00A1E0; padding-bottom: 10px; margin-bottom: 5px; }
+            p { font-size: 14px; color: #666; }
+            table { border-collapse: collapse; width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; border-radius: 8px; overflow: hidden; }
+            th { background-color: #00A1E0; color: white; padding: 12px; text-align: left; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+            td { border-bottom: 1px solid #eee; padding: 12px; font-size: 13px; }
+            tr:last-child td { border-bottom: none; }
+            tr:nth-child(even) { background-color: #fcfcfc; }
+            tr:hover { background-color: #f1f7ff; transition: 0.2s; }
+            .null-value { color: #bbb; font-style: italic; font-size: 11px; }
+            .query-id { font-size: 10px; color: #999; margin-top: 20px; text-align: right; }
+        </style>
+        
+        <h2>Resultados Data Cloud - Devlyn 360</h2>
+        <p>Se han recuperado <b>${response.rowCount}</b> registros con éxito.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    ${columns.map(col => `<th>${col.replace('__c', '').replace('ssot__', '')}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${formattedData.map(row => `
+                    <tr>
+                        ${columns.map(col => `<td>${row[col] !== null && row[col] !== undefined ? row[col] : '<span class="null-value">vacio</span>'}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div class="query-id">ID de Consulta: ${response.queryId} | Fin: ${response.endTime}</div>
+    `;
+    pm.visualizer.set(template);
+} else {
+    console.log("No se encontraron datos o metadatos en la respuesta.");
+}

@@ -1,0 +1,54 @@
+================================================================================
+QUERY MAESTRA DE VALIDACIÓN 360 - PROYECTO DEVLYN
+================================================================================
+Esta consulta consolida datos de 6 fuentes distintas en una sola tabla para 
+validar la unificación de identidad (MuleSoft / Data Cloud).
+
+OBJETIVO: Validar que un Cliente Unificado tiene amarrados correctamente sus:
+1. Datos de Perfil (Data Cloud)
+2. Diagnósticos de Vista (POS)
+3. Antecedentes Médicos (POS)
+4. Estilo de Vida / Driver Visual (POS)
+5. Órdenes de Venta (Ventas/ERP)
+6. Citas Médicas (TuoTempo)
+
+--------------------------------------------------------------------------------
+SQL PARA POSTMAN (COPIAR Y PEGAR):
+--------------------------------------------------------------------------------
+
+{
+"sql": "SELECT u.ssot__FirstName__c AS Nombre, u.ssot__LastName__c AS Apellido, u.Id_POS__c AS ID_Tienda, u.Id_TuoTempo__c AS ID_Citas, diag.MIOPIA__c, diag.ASTIGMATISMO__c, diag.FECHA__c AS Fecha_Diag, ant.DIABETES__c, ant.HIPERTENSION__c, dv.NIVEL_VISION__c, ord.ssot__OrderNumber__c AS Ticket, ord.ssot__TotalAmount__c AS Monto, cita.activityTitle__c AS Servicio, cita.estatus_cita__c AS Status_Cita FROM UnifiedssotIndividualDev2__dlm AS u LEFT JOIN ssot__SalesOrder__dlm AS ord ON u.Id_POS__c = ord.ssot__SoldToCustomerId__c LEFT JOIN TUOTEMPO_CITA__dlm AS cita ON u.Id_TuoTempo__c = cita.memberid__c LEFT JOIN (SELECT ID_CLIENTE__c, MIOPIA__c, ASTIGMATISMO__c, FECHA__c, ROW_NUMBER() OVER(PARTITION BY ID_CLIENTE__c ORDER BY FECHA__c DESC) as rn FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm) AS diag ON u.Id_POS__c = diag.ID_CLIENTE__c AND diag.rn = 1 LEFT JOIN (SELECT ID_CLIENTE__c, DIABETES__c, HIPERTENSION__c, ROW_NUMBER() OVER(PARTITION BY ID_CLIENTE__c ORDER BY FECHA__c DESC) as rn FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm) AS ant ON u.Id_POS__c = ant.ID_CLIENTE__c AND ant.rn = 1 LEFT JOIN (SELECT ID_CLIENTE__c, NIVEL_VISION__c, ROW_NUMBER() OVER(PARTITION BY ID_CLIENTE__c ORDER BY FECHA__c DESC) as rn FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm) AS dv ON u.Id_POS__c = dv.ID_CLIENTE__c AND dv.rn = 1 WHERE u.Id_POS__c = 'POS-789' LIMIT 10"
+}
+
+--------------------------------------------------------------------------------
+GUÍA DE VALIDACIÓN (RESULTADOS VS JSON MULESOFT):
+--------------------------------------------------------------------------------
+
+Al ejecutar esta query en Postman, cada fila representará una "foto completa" 
+del cliente. Si el cliente tiene 2 órdenes, verás 2 filas con la siguiente info:
+
+1. COLUMNAS DE PERFIL (Nombre, Apellido, ID_Tienda, ID_Citas):
+   - Si coinciden con el JSON, la identidad base está bien cargada.
+   - El ID_Citas debe ser el mismo que MuleSoft llama "idTuoTempo".
+
+2. COLUMNAS CLÍNICAS (Miopia, Astigmatismo, Diabetes, Hipertension):
+   - Estos datos vienen de las tablas DLM del POS (70881450, 7087, etc.).
+   - Estamos trayendo solo el registro MÁS RECIENTE (rn = 1).
+   - Valida que los números (1.5, 0.75) sean los mismos que en el JSON.
+
+3. COLUMNAS TRANSACCIONALES (Ticket, Monto):
+   - Aquí verás ORD-001, ORD-002, etc.
+   - Si aparecen junto al nombre del cliente, el JOIN por "Id_POS" es exitoso.
+
+4. COLUMNAS DE CITAS (Servicio, Status_Cita):
+   - Muestra "Examen de la vista", "Confirmada", etc.
+   - Si estos campos tienen datos, significa que el enlace con TuoTempo 
+     vía el ID_Citas está funcionando perfectamente.
+
+--------------------------------------------------------------------------------
+NOTAS TÉCNICAS:
+- Se usa LEFT JOIN para que, si falta información en alguna fuente (ej. el 
+  cliente no tiene citas), la consulta NO falle y te entregue lo demás.
+- El ROW_NUMBER() es vital para evitar que la tabla "explote" si el cliente 
+  tiene 50 diagnósticos históricos; solo nos interesa el actual para validar.
+================================================================================

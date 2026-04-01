@@ -1,0 +1,153 @@
+A) Órdenes y ventas (Retail / Ecommerce)
+
+SOQL:
+SELECT ssot__Id__c, ssot__OrderNumber__c, ssot__TotalAmount__c, ssot__CreatedDate__c, ssot__SalesStoreId__c 
+FROM ssot__SalesOrder__dlm 
+WHERE ssot__SoldToCustomerId__c = :posId ORDER BY ssot__CreatedDate__c DESC LIMIT 20
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "ssot__Id__c": "0WOxx0000004AbCGAU", 
+      "ssot__OrderNumber__c": "SO-00012345", 
+      "ssot__TotalAmount__c": 2450.75, 
+      "ssot__CreatedDate__c": "2025-12-10T18:35:22.000Z", 
+      "ssot__SalesStoreId__c": "STORE-0152" 
+    }, 
+    { 
+      "ssot__Id__c": "0WOxx0000004AbDGAU", 
+      "ssot__OrderNumber__c": "SO-00012211", 
+      "ssot__TotalAmount__c": 980.0, 
+      "ssot__CreatedDate__c": "2025-11-22T13:10:05.000Z", 
+      "ssot__SalesStoreId__c": "STORE-0152" 
+    } 
+  ], 
+  "startTime": "2026-03-05T15:31:10.000Z", 
+  "endTime": "2026-03-05T15:31:10.250Z", 
+  "rowCount": 2, 
+  "queryId": "a2b1c0d1-1234-4cde-9f10-abc123def456" 
+} 
+
+B) Expediente médico (Diagnóstico)
+
+SOQL:
+SELECT FECHA__c, ASTIGMATISMO__c, MIOPIA__c, HIPERMETROPIA__c, PRESBICIA__c 
+FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm 
+WHERE ID_CLIENTE__c = :posId AND FECHA__c != null ORDER BY FECHA__c DESC LIMIT 1
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "MIOPIA__c": "1.00", 
+      "ASTIGMATISMO__c": "0.50", 
+      "HIPERMETROPIA__c": "0.00", 
+      "PRESBICIA__c": "0.00",
+      "FECHA__c": "2026-03-05" 
+    } 
+  ], 
+  "startTime": "2026-03-05T15:32:02.000Z", 
+  "endTime": "2026-03-05T15:32:02.180Z", 
+  "rowCount": 1, 
+  "queryId": "b3c2d1e2-2345-4def-8a11-bcd234efa567" 
+} 
+
+C) Marketing (Engagement Email)
+
+SOQL:
+SELECT ssot__SubjectLineTxt__c, ssot__EngagementDateTm__c, Id 
+FROM ssot__EmailEngagement__dlm 
+WHERE ssot__IndividualId__c IN (:unifiedId, :posId, :email) LIMIT 10
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "ssot__SubjectLineTxt__c": "Devlyn: Promoción de temporada", 
+      "ssot__EngagementDateTm__c": "2025-12-15T09:21:44.000Z", 
+      "ssot__Id__c": "0eXxx0000009XyZEAU" 
+    }, 
+    { 
+      "ssot__SubjectLineTxt__c": "Tu cita está confirmada", 
+      "ssot__EngagementDateTm__c": "2025-12-10T16:05:10.000Z", 
+      "ssot__Id__c": "0eXxx0000009XyYEAU" 
+    } 
+  ], 
+  "startTime": "2026-03-05T15:33:11.000Z", 
+  "endTime": "2026-03-05T15:33:11.140Z", 
+  "rowCount": 2, 
+  "queryId": "c4d3e2f3-3456-4abc-9b22-cde345fab678" 
+} 
+
+D) Citas (TuoTempo)
+
+SOQL:
+SELECT start_date__c, activityTitle__c FROM TUOTEMPO_CITA__dlm WHERE memberid__c = :tuoTempoId LIMIT 5
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "start_date__c": "2026-01-20T14:30:00.000Z", 
+      "activityTitle__c": "Consulta Optometría"
+    } 
+  ], 
+  "startTime": "2026-03-05T15:34:20.000Z", 
+  "endTime": "2026-03-05T15:34:20.210Z", 
+  "rowCount": 1, 
+  "queryId": "d5e4f3a4-4567-4bcd-8c33-def456abc789" 
+}
+
+E) Driver Visual (Expediente Enriquecido)
+
+SOQL:
+SELECT NIVEL_VISION__c, TIPO_USUARIO__c, SOLUCION_VISUAL_BUSCA__c, VALOR_RAZON_VISITA__c 
+FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm 
+WHERE ID_CLIENTE__c = :posId ORDER BY FECHA__c DESC LIMIT 1
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "NIVEL_VISION__c": "Media", 
+      "TIPO_USUARIO__c": "Frecuente", 
+      "SOLUCION_VISUAL_BUSCA__c": "Lentes de sol con graduación", 
+      "VALOR_RAZON_VISITA__c": "Salud Visual" 
+    } 
+  ], 
+  "startTime": "2026-03-05T15:35:40.000Z", 
+  "endTime": "2026-03-05T15:35:40.120Z", 
+  "rowCount": 1, 
+  "queryId": "e6f5g4h3-5678-5cde-9d44-abc123def789" 
+}
+
+F) Suscripciones (VTEX)
+
+SOQL:
+SELECT plan_id__c, status__c, nextPurchaseDate__c, frequency_periodicity__c, createdAt__c 
+FROM VTEX_Subscription__dlm 
+WHERE customerId__c = :vtexId LIMIT 10
+
+Respuesta esperada (Raw Data Cloud API)
+
+{ 
+  "data": [ 
+    { 
+      "plan_id__c": "vtex.subscription.semestral", 
+      "status__c": "ACTIVE", 
+      "nextPurchaseDate__c": "2026-09-01T00:00:00.000Z", 
+      "frequency_periodicity__c": "6", 
+      "createdAt__c": "2025-12-01T10:00:00.000Z" 
+    } 
+  ], 
+  "startTime": "2026-03-05T15:36:10.000Z", 
+  "endTime": "2026-03-05T15:36:10.150Z", 
+  "rowCount": 1, 
+  "queryId": "f7g6h5i4-6789-6def-0e55-bcd234efa012" 
+}

@@ -1,32 +1,28 @@
-String targetId = '11472417';
-try {
-    System.debug('--- AUDITORÍA DE DATOS REALES PARA HORACIO ---');
+// Script de Auditoría Profunda de Datos Médicos en Data Cloud
+Map<String, String> tables = new Map<String, String>{
+    'Diagnóstico' => 'POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm',
+    'Antecedentes' => 'POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm',
+    'Driver Visual' => 'POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm',
+    'Preguntas Poder' => 'POS_POS_CLIENTE_PREG_PODER__dlm'
+};
+
+System.debug('--- INICIANDO AUDITORÍA DE DATOS REALES ---');
+
+for (String label : tables.keySet()) {
+    String table = tables.get(label);
+    String countQuery = 'SELECT count(*) as total FROM ' + table;
+    String dataQuery = 'SELECT ID_CLIENTE__c, FECHA__c FROM ' + table + ' ORDER BY FECHA__c DESC LIMIT 3';
     
-    // 1. Rastreamos el ID en las tablas de Engagement
-    String[] engagementObjects = new String[]{'ssot__EmailEngagement__dlm', 'ssot__IndividualEngagement__dlm', 'ssot__DeviceEngagement__dlm'};
-    for(String obj : engagementObjects) {
-        try {
-            String q = 'SELECT ssot__IndividualId__c, ssot__SubjectLineTxt__c FROM ' + obj + ' WHERE ssot__IndividualId__c = :targetId OR ssot__IndividualId__c LIKE '%' + targetId + '%' LIMIT 5';
-            List<SObject> results = Database.query(q);
-            if(!results.isEmpty()) {
-                System.debug('DATOS ENCONTRADOS EN ' + obj + ': ' + results.size());
-                for(SObject s : results) System.debug(' - Registro: ' + JSON.serialize(s));
-            }
-        } catch(Exception e) {}
+    try {
+        List<Map<String, Object>> countRes = TechProfile360Service.executeDataCloudQuery(countQuery);
+        Object total = (countRes.isEmpty()) ? 0 : countRes[0].get('total');
+        System.debug('TABLA: ' + label + ' | TOTAL REGISTROS: ' + total);
+        
+        if (Integer.valueOf(total) > 0) {
+            List<Map<String, Object>> dataRes = TechProfile360Service.executeDataCloudQuery(dataQuery);
+            System.debug('EJEMPLOS REALES (' + label + '): ' + JSON.serialize(dataRes));
+        }
+    } catch (Exception e) {
+        System.debug('ERROR EN TABLA ' + label + ': ' + e.getMessage());
     }
-
-    // 2. Rastreamos el ID en las tablas de RFM (Lealtad)
-    String[] rfmObjects = new String[]{'RFM_Retail_Solar__cio', 'RFM_Retail_Oftalmicos__cio', 'RFM_Retail_LC__cio'};
-    for(String obj : rfmObjects) {
-        try {
-            String q = 'SELECT unified_individual_id__c, score__c, label__c FROM ' + obj + ' WHERE unified_individual_id__c = :targetId OR unified_individual_id__c LIKE '%' + targetId + '%' LIMIT 1';
-            List<SObject> results = Database.query(q);
-            if(!results.isEmpty()) {
-                System.debug('RFM ENCONTRADO EN ' + obj + ': ' + JSON.serialize(results[0]));
-            }
-        } catch(Exception e) {}
-    }
-
-} catch(Exception e) {
-    System.debug('ERROR GENERAL: ' + e.getMessage());
 }
