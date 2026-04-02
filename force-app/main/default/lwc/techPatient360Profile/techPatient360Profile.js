@@ -61,6 +61,9 @@ export default class TechPatient360Profile extends LightningElement {
                 newPatientData.phone = d.profile.phone || 'N/A';
                 newPatientData.idPos = d.profile.idPos || 'N/A';
                 newPatientData.zipCode = d.profile.zipCode || 'N/A';
+                newPatientData.birthDateFormatted = d.profile.birthDate ? new Date(d.profile.birthDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+                newPatientData.medicalNotes = d.medicalNotes || 'Sin notas registradas';
+                newPatientData.medicalHistory = d.medicalHistory || [];
             }
 
             if (d.metrics) {
@@ -131,7 +134,11 @@ export default class TechPatient360Profile extends LightningElement {
                 productosClass: 'cotizacion-productos collapsed'
             }));
 
-            this.appointments = d.appointments || [];
+            this.appointments = (d.appointments || []).map(c => ({
+                ...c,
+                inicioFormatted: formatDate(c.inicio) + ' ' + (c.inicio ? new Date(c.inicio).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'}) : ''),
+                finFormatted: (c.fin ? new Date(c.fin).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'}) : '')
+            }));
             this.subscriptions = d.subscriptions || [];
 
             this.isLoading = false;

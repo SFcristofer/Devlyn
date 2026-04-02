@@ -1,17 +1,25 @@
-String[] tables = new String[]{'POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm', 'POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm'};
-for(String table : tables) {
-    System.debug('--- INSPECCIONANDO TABLA: ' + table + ' ---');
-    String sql = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'' + table + '\'';
-    try {
-        List<Map<String, Object>> results = TechProfile360Service.executeDataCloudQuery(sql);
-        if(results.isEmpty()) {
-            System.debug('RESULTADO: No se encontraron columnas o la tabla no es accesible vía SQL API.');
-        } else {
-            for(Map<String, Object> row : results) {
-                System.debug('COLUMNA_REAL: ' + row.get('column_name'));
-            }
-        }
-    } catch(Exception e) {
-        System.debug('ERROR_EN_TABLA_' + table + ': ' + e.getMessage());
+// Script para inspeccionar campos y tipos de datos reales
+try {
+    System.debug('--- INSPECCIONANDO CAMPOS DE CITAS ---');
+    String sqlCita = 'SELECT * FROM TUOTEMPO_CITA__dlm LIMIT 1';
+    List<Map<String, Object>> resCita = TechProfile360Service.executeDataCloudQuery(sqlCita);
+    if(!resCita.isEmpty()) {
+        System.debug('CAMPOS_CITAS: ' + resCita[0].keySet());
     }
-}
+
+    System.debug('--- INSPECCIONANDO CAMPOS DE INDIVIDUAL UNIFICADO ---');
+    String sqlUni = 'SELECT * FROM UnifiedssotIndividualDev2__dlm LIMIT 1';
+    List<Map<String, Object>> resUni = TechProfile360Service.executeDataCloudQuery(sqlUni);
+    if(!resUni.isEmpty()) {
+        System.debug('CAMPOS_UNIFICADO: ' + resUni[0].keySet());
+    }
+
+    // Buscamos si existe algun rastro de "memberid" en la tabla de links
+    System.debug('--- INSPECCIONANDO TABLA DE LINKS ---');
+    String sqlLink = 'SELECT SourceRecordId__c, UnifiedRecordId__c FROM UnifiedLinkssotIndividualDev2__dlm LIMIT 10';
+    List<Map<String, Object>> resLink = TechProfile360Service.executeDataCloudQuery(sqlLink);
+    for(Map<String, Object> r : resLink) {
+        System.debug('LINK_DATA: Source=' + r.get('SourceRecordId__c') + ' | Unified=' + r.get('UnifiedRecordId__c'));
+    }
+
+} catch (Exception e) { System.debug('ERROR_INSPECCION: ' + e.getMessage()); }

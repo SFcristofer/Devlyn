@@ -18,6 +18,7 @@
                             <div class="slds-media__body">
                                 <h2 class="profile-name">{patientData.firstName} {patientData.lastName}</h2>
                                 <div class="profile-meta">{patientData.age} años, {patientData.gender}</div>
+                                <div class="profile-meta">Cumpleaños: {patientData.birthDateFormatted}</div>
                                 <div class="profile-meta">C.P: {patientData.zipCode}</div>
                             </div>
                         </div>
@@ -510,17 +511,20 @@
                                                 </div>
                                                 <div class="orden-meta">
                                                     <span class="status-badge">{orden.status}</span>
-                                                    <span>Fecha: {orden.fechaCompraFormatted}</span>
-                                                    <span class="total-amount">Total: {orden.totalFormatted}</span>
+                                                    <span>{orden.fechaCompraFormatted}</span>
+                                                    <span class="total-amount">{orden.totalFormatted}</span>
                                                     <lightning-icon icon-name={orden.chevronIcon} size="x-small" class={orden.chevronClass}></lightning-icon>
                                                 </div>
                                             </div>
                                             
                                             <div class={orden.detailsClass}>
-                                                <div class="orden-info-row">
-                                                    <span><strong>Canal:</strong> {orden.sucursal}</span>
+                                                <div class="orden-info-grid">
+                                                    <div class="info-item"><strong>Canal:</strong> {orden.canal}</div>
+                                                    <div class="info-item"><strong>Cotización:</strong> {orden.idCotizacion}</div>
+                                                    <div class="info-item"><strong>Sucursal:</strong> {orden.sucursal}</div>
                                                 </div>
                                                 
+                                                <div class="productos-header">Detalle del pedido</div>
                                                 <template for:each={orden.productos} for:item="producto">
                                                     <div key={producto.sku} class="producto-item">
                                                         <lightning-icon icon-name="utility:check" size="xx-small" class="check-icon-green"></lightning-icon>
@@ -576,7 +580,7 @@
                                                     <strong>Sucursal:</strong> {cita.sucursal}
                                                 </div>
                                                 <div class="info-item">
-                                                    <strong>Horario:</strong> {cita.inicio} - {cita.fin}
+                                                    <strong>Horario:</strong> {cita.inicioFormatted} - {cita.finFormatted}
                                                 </div>
                                             </div>
                                         </div>
@@ -807,10 +811,7 @@
                                                         </div>
                                                         
                                                         <div class={envio.detailsClass}>
-                                                            <div class="envio-info slds-p-around_small">
-                                                                <div><strong>Desde:</strong> {envio.desde}</div>
-                                                                <div><strong>Asunto Completo:</strong> {envio.asuntoCompleto}</div>
-                                                            </div>
+                                                            <!-- Detalles eliminados a petición del usuario -->
                                                         </div>
                                                     </div>
                                                 </template>
