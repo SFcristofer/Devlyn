@@ -250,7 +250,7 @@
                     <template if:true={isTabExpediente}>
                         <div class="tab-content-wrapper">
                             
-                            <!-- Último Diagnóstico -->
+                            <!-- Último Diagnóstico Detallado -->
                             <div class="info-capsule">
                                 <div class="capsule-header">
                                      <lightning-icon 
@@ -258,14 +258,28 @@
                                             size="small"
                                             style="filter: brightness(0) saturate(100%) invert(67%) sepia(37%) saturate(436%) hue-rotate(137deg) brightness(87%) contrast(88%);">
                                         </lightning-icon>
-                                    <span>Último diagnóstico: {lastDiagnosisDate}</span>
+                                    <span>Último diagnóstico detallado: {lastDiagnosisDate}</span>
                                 </div>
                                 <div class="capsule-content expanded">
-                                    <div class="diagnosis-badges">
-                                        <template for:each={diagnoses} for:item="diagnosis">
-                                            <span key={diagnosis} class="diagnosis-badge">{diagnosis}</span>
-                                        </template>
-                                    </div>
+                                    <template if:true={patientData.lastDiagnosis}>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <strong>Evaluación:</strong> {patientData.lastDiagnosis.evaluacion}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Astigmatismo:</strong> {patientData.lastDiagnosis.astigmatismo}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Miopía:</strong> {patientData.lastDiagnosis.miopia}
+                                            </div>
+                                            <div class="info-item">
+                                                <strong>Hipermetropía:</strong> {patientData.lastDiagnosis.hipermetropia}
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template if:false={patientData.lastDiagnosis}>
+                                        <p class="slds-text-color_weak slds-p-around_small">No hay diagnósticos registrados.</p>
+                                    </template>
                                 </div>
                             </div>
                             
@@ -328,16 +342,16 @@
                                     <template if:true={hasVisualDriver}>
                                         <div class="info-grid">
                                             <div class="info-item">
-                                                <strong>Nivel de Visión:</strong> {patientData.visualDriver.NIVEL_VISION__c}
+                                                <strong>Nivel de Visión:</strong> {patientData.visualDriver.nivelVision}
                                             </div>
                                             <div class="info-item">
-                                                <strong>Tipo de Usuario:</strong> {patientData.visualDriver.TIPO_USUARIO__c}
+                                                <strong>Tipo de Usuario:</strong> {patientData.visualDriver.tipoUsuario}
                                             </div>
                                             <div class="info-item">
-                                                <strong>Solución que busca:</strong> {patientData.visualDriver.SOLUCION_VISUAL_BUSCA__c}
+                                                <strong>Solución que busca:</strong> {patientData.visualDriver.solucion}
                                             </div>
                                             <div class="info-item">
-                                                <strong>Razón de visita:</strong> {patientData.visualDriver.VALOR_RAZON_VISITA__c}
+                                                <strong>Razón de visita:</strong> {patientData.visualDriver.razon}
                                             </div>
                                         </div>
                                     </template>
@@ -362,13 +376,13 @@
                                     <template if:true={hasPowerQuestions}>
                                         <div class="info-grid">
                                             <div class="info-item">
-                                                <strong>Actividad aire libre:</strong> {patientData.powerQuestions.ACTIVIDAD_AIRE_LIBRE__c}
+                                                <strong>Actividad aire libre:</strong> {patientData.powerQuestions.aireLibre}
                                             </div>
                                             <div class="info-item">
-                                                <strong>Protege sus ojos:</strong> {patientData.powerQuestions.PROTEGE_SUS_OJOS__c}
+                                                <strong>Protege sus ojos:</strong> {patientData.powerQuestions.protegeOjos}
                                             </div>
                                             <div class="info-item">
-                                                <strong>Necesidad de protección:</strong> {patientData.powerQuestions.NECESIDAD_PROTECCION__c}
+                                                <strong>Necesidad de protección:</strong> {patientData.powerQuestions.necesidad}
                                             </div>
                                         </div>
                                     </template>

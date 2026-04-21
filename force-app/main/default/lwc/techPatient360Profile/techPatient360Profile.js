@@ -49,7 +49,15 @@ export default class TechPatient360Profile extends LightningElement {
         if (result.data) {
             const d = result.data;
             
-            // --- CONSTRUCCIÓN ATÓMICA DE DATOS (EVITA PERSISTENCIA) ---
+            // --- FUNCIONES DE UTILIDAD (Mover al inicio para evitar ReferenceError) ---
+            const formatCurrency = (val) => Number(val || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+            const formatDate = (dateStr) => {
+                if (!dateStr || dateStr === 'N/A') return 'Sin fecha';
+                const dateObj = new Date(dateStr);
+                return isNaN(dateObj.getTime()) ? dateStr : dateObj.toLocaleDateString('es-MX');
+            };
+
+            // --- CONSTRUCCIÓN ATÓMICA DE DATOS ---
             const newPatientData = this.getDefaultPatientData();
 
             if (d.profile) {
@@ -81,17 +89,56 @@ export default class TechPatient360Profile extends LightningElement {
                 }
             }
 
+            // --- PROCESAMIENTO MÉDICO ---
+            if (d.medical) {
+                // Función interna para limpiar (null) o undefined
+                const clean = (val) => (!val || val === '(null)' || val === 'null') ? 'No registrado' : val;
+
+                // 1. Driver Visual
+                const dv = d.medical.visualDriver || {};
+                newPatientData.visualDriver = {
+                    nivelVision: clean(dv.NIVEL_VISION__c),
+                    tipoUsuario: dv.TIPO_USUARIO__c == '1' ? 'Nuevo' : (dv.TIPO_USUARIO__c == '2' ? 'Recurrente' : clean(dv.TIPO_USUARIO__c)),
+                    solucion: clean(dv.SOLUCION_VISUAL_BUSCA__c),
+                    razon: clean(dv.VALOR_RAZON_VISITA__c)
+                };
+
+                // 2. Preguntas Poder
+                const pq = d.medical.powerQuestions || {};
+                newPatientData.powerQuestions = {
+                    aireLibre: clean(pq.ACTIVIDAD_AIRE_LIBRE__c),
+                    protegeOjos: clean(pq.PROTEGE_SUS_OJOS__c),
+                    necesidad: clean(pq.NECESIDAD_PROTECCION__c)
+                };
+
+                // 3. Último Diagnóstico
+                const dg = d.medical.lastDiagnosis || {};
+                newPatientData.lastDiagnosis = {
+                    evaluacion: clean(dg.EVALUACION_OP_txt__c),
+                    astigmatismo: dg.ASTIGMATISMO__c != null ? Number(dg.ASTIGMATISMO__c).toFixed(2) : '0.00',
+                    miopia: dg.MIOPIA__c != null ? Number(dg.MIOPIA__c).toFixed(2) : '0.00',
+                    hipermetropia: dg.HIPERMETROPIA__c != null ? Number(dg.HIPERMETROPIA__c).toFixed(2) : '0.00'
+                };
+                
+                // 4. Antecedentes
+                const ant = d.medical.antecedents || {};
+                const history = [];
+                if (ant.ARDOR_IRRITACION__c == '1' || ant.ARDOR_IRRITACION__c === true) history.push('Ardor/Irritación');
+                if (ant.COMEZON__c == '1' || ant.COMEZON__c === true) history.push('Comezón');
+                if (ant.DIABETES__c == '1' || ant.DIABETES__c === true) history.push('Diabetes');
+                if (ant.HIPERTENSION__c == '1' || ant.HIPERTENSION__c === true) history.push('Hipertensión');
+                
+                newPatientData.medicalHistory = history;
+                newPatientData.medicalNotes = clean(ant.NOTAS__c);
+
+                if (dg.FECHA__c) this.lastDiagnosisDate = formatDate(dg.FECHA__c);
+                if (dv.FECHA__c) this.lastExamDate = formatDate(dv.FECHA__c);
+            }
+
             // Asignación Atómica: LWC detecta el cambio de objeto completo
             this.patientData = newPatientData;
 
             // --- PROCESAMIENTO DE TABLAS ---
-            const formatCurrency = (val) => Number(val || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
-            const formatDate = (dateStr) => {
-                if (!dateStr || dateStr === 'N/A') return 'Sin fecha';
-                const dateObj = new Date(dateStr);
-                return isNaN(dateObj.getTime()) ? dateStr : dateObj.toLocaleDateString('es-MX');
-            };
-
             this.orders = (d.orders || []).map(o => ({
                 ...o,
                 isExpanded: false,
@@ -190,6 +237,20 @@ export default class TechPatient360Profile extends LightningElement {
     get hasQuotes() { return this.quotes && this.quotes.length > 0; }
     get hasSubscriptions() { return this.subscriptions && this.subscriptions.length > 0; }
     get hasCampaigns() { return this.campaigns && this.campaigns.length > 0; }
+
+    // Getters de Visibilidad para Expediente Médico
+    get hasVisualDriver() { 
+        return this.patientData.visualDriver && Object.keys(this.patientData.visualDriver).length > 0; 
+    }
+    get hasPowerQuestions() { 
+        return this.patientData.powerQuestions && Object.keys(this.patientData.powerQuestions).length > 0; 
+    }
+    get hasGraduations() {
+        return this.patientData.graduations && this.patientData.graduations.length > 0;
+    }
+    get hasFamilyRelations() {
+        return this.patientData.familyRelations && this.patientData.familyRelations.length > 0;
+    }
 
     get tabExpedienteClass() { return this.activeTab === 'expediente' ? 'tab-button active' : 'tab-button'; }
     get tabOrdenesClass() { return this.activeTab === 'ordenes' ? 'tab-button active' : 'tab-button'; }

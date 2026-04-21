@@ -113,6 +113,9 @@ public WITHOUT SHARING class TechHelper {
                 ((List<Object>)res.get('campaigns')).add(new Map<String, Object>{'nombre'=>s, 'uniqueKey'=>e.get('Id'), 'envios'=>new List<Object>{new Map<String, Object>{'uniqueKey'=>e.get('Id'), 'asunto'=>s, 'fechaFormateada'=>e.get('ssot__EngagementDateTm__c')}}}); 
             }
 
+            // 3. Expediente Médico
+            res.put('medical', TechProfile360Service.getMedicalInfo(uniId));
+
         } catch(Exception e) {} return res;
     }
     private static Integer age(Date d) { if(d==null) return 0; return d.daysBetween(Date.today())/365; }

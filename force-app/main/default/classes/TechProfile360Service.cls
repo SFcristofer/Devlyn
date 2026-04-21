@@ -114,15 +114,39 @@ public WITHOUT SHARING class TechProfile360Service {
     public static Map<String, Object> getMedicalInfo(String unifiedId) {
         Map<String, Object> data = new Map<String, Object>();
         try {
-            List<String> ids = getRelatedIds(unifiedId); if (ids.isEmpty()) return data;
-            List<SObject> ant = performQuery('SELECT ARDOR_IRRITACION__c, COMEZON__c, DIABETES__c, HIPERTENSION__c, NOTAS__c, FECHA__c FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm WHERE ID_CLIENTE__c IN :ids ORDER BY FECHA__c DESC LIMIT 1', mockAntecedents);
+            // 1. Obtener IDs relacionados (Links)
+            List<String> ids = getRelatedIds(unifiedId);
+            
+            // 2. BUSQUEDA REDUNDANTE: Obtener el ID_POS directamente del perfil
+            // Este es el ID más confiable para las tablas médicas (Antecedentes, Driver, etc.)
+            String posIdDirecto = '';
+            for(SObject p : performQuery('SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = \''+unifiedId+'\'', mockProfiles)) {
+                posIdDirecto = (String)p.get('Id_POS__c');
+                if(posIdDirecto != null) {
+                    if(!ids.contains(posIdDirecto)) ids.add(posIdDirecto);
+                    // Añadir versión solo numérica por si acaso
+                    String soloNumeros = posIdDirecto.replaceAll('[^0-9]', '');
+                    if(!ids.contains(soloNumeros)) ids.add(soloNumeros);
+                }
+            }
+
+            if (ids.isEmpty()) ids.add(unifiedId);
+
+            // 3. Consultas con los IDs validados (Concatenación para evitar "Variable does not exist: ids")
+            String idFilter = '(\'' + String.join(ids, '\',\'') + '\')';
+
+            List<SObject> ant = performQuery('SELECT ARDOR_IRRITACION__c, COMEZON__c, DIABETES__c, HIPERTENSION__c, NOTAS__c, FECHA__c FROM POS_POS_CLIENTE_ANTECEDENTES_ME_7087__dlm WHERE ID_CLIENTE__c IN ' + idFilter + ' ORDER BY FECHA__c DESC LIMIT 1', mockAntecedents);
             if (!ant.isEmpty()) data.put('antecedents', ant[0]);
-            List<SObject> drv = performQuery('SELECT NIVEL_VISION__c, TIPO_USUARIO__c, FECHA__c FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm WHERE ID_CLIENTE__c IN :ids ORDER BY FECHA__c DESC LIMIT 1', mockDrivers);
+            
+            List<SObject> drv = performQuery('SELECT NIVEL_VISION__c, TIPO_USUARIO__c, FECHA__c FROM POS_POS_CLIENTE_DRIVER_VISUAL_708C22__dlm WHERE ID_CLIENTE__c IN ' + idFilter + ' ORDER BY FECHA__c DESC LIMIT 1', mockDrivers);
             if (!drv.isEmpty()) data.put('visualDriver', drv[0]);
-            List<SObject> pwr = performQuery('SELECT ACTIVIDAD_AIRE_LIBRE__c, PROTEGE_SUS_OJOS__c, FECHA_ALTA__c FROM POS_POS_CLIENTE_PREG_PODER__dlm WHERE ID_CLIENTE__c IN :ids ORDER BY FECHA_ALTA__c DESC LIMIT 1', mockPowers);
+            
+            List<SObject> pwr = performQuery('SELECT ACTIVIDAD_AIRE_LIBRE__c, PROTEGE_SUS_OJOS__c, FECHA_ALTA__c FROM POS_POS_CLIENTE_PREG_PODER__dlm WHERE ID_CLIENTE__c IN ' + idFilter + ' ORDER BY FECHA_ALTA__c DESC LIMIT 1', mockPowers);
             if (!pwr.isEmpty()) data.put('powerQuestions', pwr[0]);
-            List<SObject> diag = performQuery('SELECT ASTIGMATISMO__c, HIPERMETROPIA__c, MIOPIA__c, FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm WHERE ID_CLIENTE__c IN :ids ORDER BY FECHA__c DESC LIMIT 1', mockDiagnosis);
+            
+            List<SObject> diag = performQuery('SELECT ASTIGMATISMO__c, HIPERMETROPIA__c, MIOPIA__c, FECHA__c FROM POS_POS_CLIENTE_DIAGNOSTICO_70881450__dlm WHERE ID_CLIENTE__c IN ' + idFilter + ' ORDER BY FECHA__c DESC LIMIT 1', mockDiagnosis);
             if (!diag.isEmpty()) data.put('lastDiagnosis', diag[0]);
+            
         } catch (Exception e) {}
         return data;
     }
