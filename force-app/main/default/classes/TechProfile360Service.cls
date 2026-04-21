@@ -28,9 +28,12 @@ public WITHOUT SHARING class TechProfile360Service {
         List<String> ids = new List<String>();
         try {
             // 1. IDs desde el Perfil
-            for(SObject p : performQuery('SELECT Id_POS__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = \''+unifiedId+'\'', mockProfiles)) {
+            for(SObject p : performQuery('SELECT Id_POS__c, Id_TuoTempo__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = \''+unifiedId+'\'', mockProfiles)) {
                 String val = (String)p.get('Id_POS__c');
                 if(val != null) { ids.add(val); ids.add(val.replaceAll('[^0-9]', '')); }
+                
+                String tt = (String)p.get('Id_TuoTempo__c');
+                if(tt != null && !ids.contains(tt)) ids.add(tt);
             }
             // 2. IDs desde la tabla de Links (Identidad Unificada Total)
             String qLink = 'SELECT SourceRecordId__c FROM UnifiedLinkssotIndividualDev2__dlm WHERE UnifiedRecordId__c = \'' + unifiedId + '\'';
@@ -79,10 +82,23 @@ public WITHOUT SHARING class TechProfile360Service {
     public static List<Map<String, Object>> getAppointments(String unifiedId) {
         List<Map<String, Object>> res = new List<Map<String, Object>>();
         try {
+            // 1. Obtener todos los IDs posibles del cliente
+            List<String> ids = getRelatedIds(unifiedId);
+            if (ids.isEmpty()) ids.add(unifiedId);
+            
+            // 2. Incluir el ID de TuoTempo si existe en el perfil
             List<SObject> profiles = performQuery('SELECT Id_TuoTempo__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c = \''+unifiedId+'\'', mockProfiles);
-            if (profiles.isEmpty() || profiles[0].get('Id_TuoTempo__c') == null) return res;
-            String ttId = (String)profiles[0].get('Id_TuoTempo__c');
-            for (SObject c : performQuery('SELECT start_date__c, end_date__c, activityTitle__c, areaTitle__c, estatus_cita__c, activity_lid__c FROM TUOTEMPO_CITA__dlm WHERE memberid__c = \''+ttId+'\' ORDER BY start_date__c DESC LIMIT 20', mockCitas)) {
+            if (!profiles.isEmpty() && profiles[0].get('Id_TuoTempo__c') != null) {
+                String ttId = (String)profiles[0].get('Id_TuoTempo__c');
+                if(!ids.contains(ttId)) ids.add(ttId);
+            }
+            
+            String idFilter = '(\'' + String.join(ids, '\',\'') + '\')';
+
+            // 3. Consultar citas buscando en memberid__c (donde suele estar el TT ID o el POS ID)
+            String q = 'SELECT start_date__c, end_date__c, activityTitle__c, areaTitle__c, estatus_cita__c, activity_lid__c FROM TUOTEMPO_CITA__dlm WHERE memberid__c IN ' + idFilter + ' ORDER BY start_date__c DESC LIMIT 20';
+
+            for (SObject c : performQuery(q, mockCitas)) {
                 res.add(new Map<String, Object>{'citaId'=>c.get('activity_lid__c'), 'tipo'=>c.get('activityTitle__c'), 'status'=>c.get('estatus_cita__c'), 'sucursal'=>c.get('areaTitle__c'), 'inicio'=>c.get('start_date__c'), 'fin'=>c.get('end_date__c')});
             }
         } catch (Exception e) {}

@@ -116,6 +116,9 @@ public WITHOUT SHARING class TechHelper {
             // 3. Expediente Médico
             res.put('medical', TechProfile360Service.getMedicalInfo(uniId));
 
+            // 4. Citas
+            res.put('appointments', TechProfile360Service.getAppointments(uniId));
+
         } catch(Exception e) {} return res;
     }
     private static Integer age(Date d) { if(d==null) return 0; return d.daysBetween(Date.today())/365; }

@@ -178,7 +178,16 @@ export default class TechPatient360Profile extends LightningElement {
                 productosClass: 'cotizacion-productos collapsed'
             }));
 
-            this.appointments = d.appointments || [];
+            this.appointments = (d.appointments || []).map(cita => ({
+                ...cita,
+                citaId: cita.citaId || 'N/A',
+                tipo: cita.tipo || 'Cita General',
+                status: cita.status || 'Programada',
+                sucursal: cita.sucursal || 'Sucursal Devlyn',
+                inicio: formatDate(cita.inicio),
+                fin: formatDate(cita.fin)
+            }));
+
             this.subscriptions = d.subscriptions || [];
 
             this.isLoading = false;
