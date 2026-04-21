@@ -130,7 +130,31 @@ public WITHOUT SHARING class TechProfile360Service {
     public static List<SObject> searchProfiles(String searchTerm, String attr) {
         List<String> allowed = new List<String>{'ssot__FirstName__c', 'ssot__LastName__c', 'Email__c', 'Id_POS__c'};
         if (String.isBlank(searchTerm) || !allowed.contains(attr)) return new List<SObject>();
-        String q = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, ssot__GenderId__c FROM UnifiedssotIndividualDev2__dlm WHERE ' + attr + ' LIKE \'%' + String.escapeSingleQuotes(searchTerm) + '%\' LIMIT 20';
+        
+        String q = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c, ssot__GenderId__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
+        
+        // Mejora: Si se busca por nombre y hay múltiples palabras, aplicar lógica AND cruzada
+        if (attr == 'ssot__FirstName__c' && searchTerm.trim().contains(' ')) {
+            List<String> words = searchTerm.trim().split('\\s+');
+            List<String> conditions = new List<String>();
+            for (String word : words) {
+                String u = String.escapeSingleQuotes(word.toUpperCase());
+                String t = String.escapeSingleQuotes(word.substring(0,1).toUpperCase() + word.substring(1).toLowerCase());
+                conditions.add('(' +
+                    'ssot__FirstName__c LIKE \'%' + u + '%\' OR ssot__FirstName__c LIKE \'%' + t + '%\' OR ' +
+                    'ssot__LastName__c LIKE \'%' + u + '%\' OR ssot__LastName__c LIKE \'%' + t + '%\' OR ' +
+                    'Apellido_Paterno__c LIKE \'%' + u + '%\' OR Apellido_Paterno__c LIKE \'%' + t + '%\' OR ' +
+                    'Apellido_Materno__c LIKE \'%' + u + '%\' OR Apellido_Materno__c LIKE \'%' + t + '%\'' +
+                ')');
+            }
+            q += String.join(conditions, ' AND ');
+        } else {
+            // Comportamiento estándar para una sola palabra o campos técnicos
+            q += attr + ' LIKE \'%' + String.escapeSingleQuotes(searchTerm) + '%\'';
+        }
+        
+        q += ' LIMIT 20';
+        
         try { return performQuery(q, mockProfiles); } catch (Exception e) { return new List<SObject>(); }
     }
 

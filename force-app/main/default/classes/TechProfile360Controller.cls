@@ -58,21 +58,44 @@ public with sharing class TechProfile360Controller {
         }
 
         Map<String, String> bindMap = new Map<String, String>();
-        for(Integer i=0; i<tokens.size(); i++) bindMap.put('p'+i, '%' + tokens[i].toUpperCase() + '%');
+        for(Integer i=0; i<tokens.size(); i++) {
+            String word = tokens[i];
+            bindMap.put('p'+i+'u', '%' + word.toUpperCase() + '%');
+            bindMap.put('p'+i+'t', '%' + toTitleCase(word) + '%');
+        }
 
-        // --- FASE 1: BÚSQUEDA ESPECIALIZADA ---
+        // --- FASE 1: BÚSQUEDA ESPECIALIZADA (AND) ---
         List<UnifiedssotIndividualDev2__dlm> precisionResults = new List<UnifiedssotIndividualDev2__dlm>();
         if(isEmail) {
-            // AJUSTE: Búsqueda flexible de email (soporta minúsculas/mayúsculas nativamente)
             String emailPat = '%' + term + '%';
             String emailPatUpper = '%' + term.toUpperCase() + '%';
             bindMap.put('emailPat', emailPat);
             bindMap.put('emailPatUpper', emailPatUpper);
             precisionResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE Email__c LIKE :emailPat OR Email__c LIKE :emailPatUpper LIMIT 200', bindMap, AccessLevel.USER_MODE);
         } else {
-            String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
+            String q1 = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Apellido_Paterno__c, Apellido_Materno__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
             List<String> andConds = new List<String>();
-            for(Integer i=0; i<tokens.size(); i++) andConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+' OR Id_POS__c LIKE :p'+i+' OR Email__c LIKE :p'+i+')');
+            for(Integer i=0; i<tokens.size(); i++) {
+                String cond;
+                if(i == 0) {
+                    // La PRIMERA palabra debe ser el INICIO de algún campo (evita "Jose Rafael" si buscas "Rafael")
+                    cond = '(' +
+                        'ssot__FirstName__c LIKE :p'+i+'u_start OR ssot__FirstName__c LIKE :p'+i+'t_start OR ' +
+                        'ssot__LastName__c LIKE :p'+i+'u_start OR ssot__LastName__c LIKE :p'+i+'t_start OR ' +
+                        'Apellido_Paterno__c LIKE :p'+i+'u_start OR Apellido_Paterno__c LIKE :p'+i+'t_start' +
+                    ')';
+                    bindMap.put('p'+i+'u_start', tokens[i].toUpperCase() + '%');
+                    bindMap.put('p'+i+'t_start', toTitleCase(tokens[i]) + '%');
+                } else {
+                    cond = '(' +
+                        'ssot__FirstName__c LIKE :p'+i+'u OR ssot__FirstName__c LIKE :p'+i+'t OR ' +
+                        'ssot__LastName__c LIKE :p'+i+'u OR ssot__LastName__c LIKE :p'+i+'t OR ' +
+                        'Apellido_Paterno__c LIKE :p'+i+'u OR Apellido_Paterno__c LIKE :p'+i+'t OR ' +
+                        'Apellido_Materno__c LIKE :p'+i+'u OR Apellido_Materno__c LIKE :p'+i+'t' +
+                    ')';
+                }
+                andConds.add(cond);
+            }
             q1 += String.join(andConds, ' AND ') + ' LIMIT 200';
             precisionResults = Database.queryWithBinds(q1, bindMap, AccessLevel.USER_MODE);
         }
@@ -82,24 +105,63 @@ public with sharing class TechProfile360Controller {
         if(!isEmail && numericToken != null && precisionResults.size() < 200) {
             String numPat = '%' + numericToken + '%';
             bindMap.put('numPat', numPat);
-            numericResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__FirstName__c LIKE :numPat OR ssot__LastName__c LIKE :numPat OR Id_POS__c LIKE :numPat LIMIT 200', bindMap, AccessLevel.USER_MODE);
+            numericResults = Database.queryWithBinds('SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Apellido_Paterno__c, Apellido_Materno__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE (ssot__FirstName__c LIKE :numPat OR ssot__LastName__c LIKE :numPat OR Id_POS__c LIKE :numPat) LIMIT 200', bindMap, AccessLevel.USER_MODE);
         }
 
-        // --- FASE 3: VOLUMEN (OR) ---
+        // --- FASE 3: VOLUMEN (Eliminado por falta de precisión) ---
         List<UnifiedssotIndividualDev2__dlm> broadResults = new List<UnifiedssotIndividualDev2__dlm>();
-        if(!isEmail && precisionResults.size() + numericResults.size() < 200) {
-            String qBroad = 'SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ';
-            List<String> orConds = new List<String>();
-            for(Integer i=0; i<tokens.size(); i++) orConds.add('(ssot__FirstName__c LIKE :p'+i+' OR ssot__LastName__c LIKE :p'+i+')');
-            if(!idsFromPhones.isEmpty()) orConds.add('ssot__Id__c IN :idsFromPhones');
-            qBroad += '(' + String.join(orConds, ' OR ') + ') LIMIT 200';
-            broadResults = Database.queryWithBinds(qBroad, bindMap, AccessLevel.USER_MODE);
+        // Solo mantenemos búsqueda por teléfono si se detectó alguno
+        if(!idsFromPhones.isEmpty() && precisionResults.size() + numericResults.size() < 200) {
+            broadResults = [SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c FROM UnifiedssotIndividualDev2__dlm WHERE ssot__Id__c IN :idsFromPhones LIMIT 200];
         }
 
         Map<String, UnifiedssotIndividualDev2__dlm> uniqueMap = new Map<String, UnifiedssotIndividualDev2__dlm>();
         for(UnifiedssotIndividualDev2__dlm r : precisionResults) uniqueMap.put(r.ssot__Id__c, r);
         for(UnifiedssotIndividualDev2__dlm r : numericResults) uniqueMap.put(r.ssot__Id__c, r);
         for(UnifiedssotIndividualDev2__dlm r : broadResults) if(uniqueMap.size() < 200) uniqueMap.put(r.ssot__Id__c, r);
+
+        // --- FILTRO QUIRÚRGICO: ADN DE IDENTIDAD (MATCH EXACTO DE PALABRAS) ---
+        Boolean isPureNumeric = (tokens.size() == 1 && tokens[0].isNumeric());
+
+        if(!isEmail && !tokens.isEmpty() && !isPureNumeric) {
+            Map<String, UnifiedssotIndividualDev2__dlm> filteredMap = new Map<String, UnifiedssotIndividualDev2__dlm>();
+            
+            // 1. Preparar el "ADN" de la búsqueda (Set de palabras en minúsculas)
+            Set<String> searchADN = new Set<String>();
+            for(String t : tokens) searchADN.add(t.toLowerCase());
+            
+            for(UnifiedssotIndividualDev2__dlm r : uniqueMap.values()) {
+                // 2. Construir el "ADN" del registro (Juntamos todos los campos de nombre)
+                String rawFull = (r.ssot__FirstName__c ?? '') + ' ' + 
+                                (r.ssot__LastName__c ?? '') + ' ' + 
+                                (r.Apellido_Paterno__c ?? '') + ' ' + 
+                                (r.Apellido_Materno__c ?? '');
+                
+                Set<String> recordADN = new Set<String>();
+                for(String word : rawFull.toLowerCase().split('\\s+')) {
+                    if(String.isNotBlank(word)) recordADN.add(word);
+                }
+                
+                // 3. LA REGLA DE ORO:
+                // - Si es una sola palabra: Permitimos que esté contenida (Modo Descubrimiento)
+                // - Si son varias palabras: Los conjuntos deben ser IDENTICOS (Modo Quirúrgico)
+                Boolean isMatch = false;
+                if(tokens.size() == 1) {
+                    // Para 1 palabra, verificamos si alguna palabra del registro COMIENZA con la búsqueda
+                    for(String rw : recordADN) {
+                        if(rw.startsWith(tokens[0].toLowerCase())) { isMatch = true; break; }
+                    }
+                } else {
+                    // Para 2+ palabras, exigimos match exacto de identidad
+                    isMatch = recordADN.equals(searchADN);
+                }
+
+                if(isMatch) {
+                    filteredMap.put(r.ssot__Id__c, r);
+                }
+            }
+            uniqueMap = filteredMap;
+        }
 
         Set<String> finalIds = uniqueMap.keySet();
         Map<String, String> phoneMap = new Map<String, String>();
@@ -176,7 +238,13 @@ public with sharing class TechProfile360Controller {
             if(fullName.contains(fullTerm)) s += 25000;
 
             if(!tokens.isEmpty() && fn.startsWith(tokens[0].toUpperCase())) s += 5000;
-            s -= (nameParts.size() * 5); 
+            
+            // 4. PENALIZACIÓN POR RUIDO (Palabras extra no buscadas)
+            // Si buscaste 2 palabras y el cliente tiene 4, restamos puntos para priorizar el match exacto
+            if(nameParts.size() > tokens.size()) {
+                s -= (nameParts.size() - tokens.size()) * 5000;
+            }
+            
             return s;
         }
 

@@ -1,0 +1,84 @@
+==========================================================================
+DOCUMENTACIÓN DE VALIDACIÓN: API EXPERIENCIA POS (DATA CLOUD & MULESOFT)
+==========================================================================
+Proyecto: TechProfile360 - Integración Data Cloud
+Objetivo: Validar la lógica de búsqueda de clientes en el POS.
+--------------------------------------------------------------------------
+
+1. LÓGICA DE OPERACIÓN DEL SISTEMA
+--------------------------------------------------
+El sistema de búsqueda implementado en MuleSoft debe operar bajo dos modalidades críticas para garantizar la calidad del dato:
+
+A. MODO DESCUBRIMIENTO (1 Palabra):
+   - Se activa con un solo término (ej. "Rafa").
+   - Busca coincidencias parciales al inicio del nombre.
+   - Permite localizar perfiles de forma rápida y amplia.
+
+B. MODO QUIRÚRGICO (2+ Palabras):
+   - Se activa con dos o más términos (ej. "Rafael Lopez").
+   - Aplica un filtro de "ADN de Identidad".
+   - REGLA DE ORO: Solo permite registros cuyo conjunto de palabras sea IDÉNTICO al buscado.
+   - EXCLUSIÓN AUTOMÁTICA: Elimina registros con nombres secundarios o apellidos extra (ej: si buscas "Rafael Lopez", NO debe aparecer "Rafael Lopez Gutierrez").
+
+2. CASOS DE PRUEBA Y QUERIES SQL (VALIDACIÓN TÉCNICA)
+--------------------------------------------------
+
+CASO 1: Consulta de una palabra (Modo Descubrimiento)
+Query:
+SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE UPPER(ssot__FirstName__c) LIKE 'RAFA%'
+
+CASO 2: Consulta de más de una palabra (Modo Quirúrgico)
+Query:
+SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE UPPER(ssot__FirstName__c) = 'RAFAEL' 
+  AND (UPPER(ssot__LastName__c) = 'GUTIERREZ' OR UPPER(Apellido_Paterno__c) = 'GUTIERREZ') 
+  AND (Apellido_Materno__c IS NULL OR Apellido_Materno__c = '')
+
+CASO 3: Consulta a través de Correo Electrónico
+Query:
+SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE UPPER(Email__c) = 'RIL_14@HOTMAIL.COM'
+
+CASO 4: Consulta a través de ID POS (Sistema Externo)
+Query:
+SELECT ssot__FirstName__c, ssot__LastName__c, Email__c 
+FROM UnifiedssotIndividualDev2__dlm 
+WHERE Id_POS__c = '12992395'
+
+CASO 5: Consulta a través de Teléfono (Relación de Tablas)
+Query:
+SELECT p.ssot__FirstName__c, p.ssot__LastName__c, p.Email__c, p.Id_POS__c, t.ssot__TelephoneNumber__c 
+FROM UnifiedssotIndividualDev2__dlm p 
+JOIN UnifiedssotContactPointPhoneDev2__dlm t ON p.ssot__Id__c = t.ssot__PartyId__c 
+WHERE t.ssot__TelephoneNumber__c LIKE '%6862034511%'
+
+3. GUÍA DE VALIDACIÓN EN MULESOFT (PASO A PASO)
+--------------------------------------------------
+1. Levantar el Bridge Local (para pruebas previas): 
+   Ejecutar 'node datacloud-bridge.js'.
+2. Configurar Postman:
+   - URL: http://localhost:8080/query (Bridge) o http://localhost:8081/api/query (MuleSoft).
+   - Method: POST
+   - Body: JSON con el campo "sql".
+3. Validar en Anypoint Platform (Design Center):
+   - Crear RAML con el endpoint /query.
+   - Usar el Mocking Service para validar que la estructura del JSON de entrada sea correcta.
+   - En MuleSoft Composer/Studio, mapear los campos del DMO a los campos del POS.
+
+4. MATRIZ DE RESULTADOS ESPERADOS
+--------------------------------------------------
+| Entrada (Input)   | Comportamiento Esperado                                  |
+|-------------------|----------------------------------------------------------|
+| "AN"              | Regresa "ANA", "ANTONIO", "ANDREA" (Match Parcial).     |
+| "RAFAEL LOPEZ"    | Regresa "RAFAEL LOPEZ" únicamente (Match Exacto).        |
+| "RAFAEL LOPEZ"    | EXCLUYE "RAFAEL LOPEZ GUTIERREZ" (Limpieza Quirúrgica). |
+| "correo@mail.com" | Regresa 1 Perfil Unificado único.                        |
+| "6862034511"      | Une Individual + Teléfono (Integridad Referencial).      |
+
+--------------------------------------------------------------------------
+Documentación generada por Gemini CLI para TechProfile360.
+==========================================================================

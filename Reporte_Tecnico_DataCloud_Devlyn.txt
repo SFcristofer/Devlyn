@@ -1,0 +1,77 @@
+==========================================================================
+REPORTE TÉCNICO: OPTIMIZACIÓN DE BÚSQUEDA 360 - DATA CLOUD DEVLYN
+==========================================================================
+Fecha: 16 de abril de 2026
+Proyecto: DevylinProyect (Patient 360)
+Objetivo: Implementar búsqueda de alta precisión y estandarización para MuleSoft.
+
+1. RESUMEN EJECUTIVO
+--------------------------------------------------------------------------
+Se ha rediseñado la lógica de búsqueda en Salesforce (LWC/Apex) y Data Cloud para resolver la problemática de "resultados demasiado abiertos". La nueva implementación garantiza que, al buscar múltiples términos (Nombre y Apellidos), el sistema actúe de forma quirúrgica, eliminando registros irrelevantes.
+
+2. ARQUITECTURA DE DATOS (DMOs UTILIZADOS)
+--------------------------------------------------------------------------
+Para todas las consultas de identidad, se utilizan los siguientes objetos de Data Cloud (DMO):
+- Perfil Maestro: UnifiedssotIndividualDev2__dlm
+- Puntos de Contacto (Teléfono): UnifiedssotContactPointPhoneDev2__dlm
+- Identidad Cruzada: UnifiedLinkssotIndividualDev2__dlm
+
+3. LÓGICA DE PRECISIÓN IMPLEMENTADA ("REGLA DE ORO")
+--------------------------------------------------------------------------
+El sistema ahora opera en dos modos automáticos:
+
+A. MODO DESCUBRIMIENTO (1 Palabra):
+   Si el usuario ingresa un solo término (ej. "Rafa"), el sistema busca coincidencias parciales al inicio de los nombres.
+
+B. MODO QUIRÚRGICO (2+ Palabras):
+   Si el usuario ingresa dos o más términos (ej. "Rafael Lopez"), el sistema aplica un filtro de "ADN de Identidad":
+   - Debe existir un match AND entre todas las palabras.
+   - Solo se permiten registros cuyo conjunto de palabras sea IDÉNTICO al buscado.
+   - Se eliminan automáticamente registros con nombres secundarios o apellidos extra que no fueron solicitados.
+
+4. GUÍA DE CONSULTAS SQL (PARA MULESOFT Y POSTMAN)
+--------------------------------------------------------------------------
+Importante: Data Cloud SQL es Case-Sensitive. Se debe usar la función UPPER() para asegurar resultados consistentes.
+
+A. Búsqueda por Nombre y Apellido (Match Exacto)
+Este query replica la precisión del "Modo Quirúrgico":
+--------------------------------------------------------------------------
+SELECT ssot__Id__c, ssot__FirstName__c, ssot__LastName__c, Id_POS__c, Email__c
+FROM UnifiedssotIndividualDev2__dlm
+WHERE UPPER(ssot__FirstName__c) = 'RAFAEL'
+  AND (UPPER(ssot__LastName__c) = 'LOPEZ' OR UPPER(Apellido_Paterno__c) = 'LOPEZ')
+  AND (Apellido_Materno__c IS NULL OR Apellido_Materno__c = '')
+--------------------------------------------------------------------------
+
+B. Búsqueda por Teléfono (Cross-Join)
+--------------------------------------------------------------------------
+SELECT p.ssot__FirstName__c, p.ssot__LastName__c, p.Email__c, p.Id_POS__c, t.ssot__TelephoneNumber__c
+FROM UnifiedssotIndividualDev2__dlm p
+JOIN UnifiedssotContactPointPhoneDev2__dlm t ON p.ssot__Id__c = t.ssot__PartyId__c
+WHERE t.ssot__TelephoneNumber__c LIKE '%5512345678%'
+--------------------------------------------------------------------------
+
+C. Búsqueda por Email
+--------------------------------------------------------------------------
+SELECT ssot__FirstName__c, ssot__LastName__c, Id_POS__c
+FROM UnifiedssotIndividualDev2__dlm
+WHERE UPPER(Email__c) = 'CORREO@EJEMPLO.COM'
+--------------------------------------------------------------------------
+
+D. Búsqueda por ID POS
+--------------------------------------------------------------------------
+SELECT ssot__FirstName__c, ssot__LastName__c, Email__c
+FROM UnifiedssotIndividualDev2__dlm
+WHERE Id_POS__c = '12345678'
+--------------------------------------------------------------------------
+
+5. VALIDACIONES TÉCNICAS (CHECKLIST)
+--------------------------------------------------------------------------
+1. Case Sensitivity: Siempre normalizar con UPPER() en el WHERE.
+2. Campos de Apellidos: Consultar tanto ssot__LastName__c como Apellido_Paterno__c para cubrir todas las fuentes (VTEX/POS).
+3. Conteo de Palabras: Para máxima precisión en integraciones, validar que la cantidad de palabras del input coincida con el registro.
+4. Endpoint de Query: /services/data/v60.0/ssot/queryv2
+
+==========================================================================
+FIN DEL REPORTE
+==========================================================================

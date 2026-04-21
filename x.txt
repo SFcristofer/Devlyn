@@ -1,31 +1,40 @@
-Nombre
-Apellido Paterno
-Apellido Materno
-Telefono
-Correo electronico
-Nombre, Apellido Paterno
-Nombre, Apellido Materno
-Nombre, Telefono
-Nombre, Correo electronico
-Apellido Paterno, Apellido Materno
-Apellido Paterno, Telefono
-Apellido Paterno, Correo electronico
-Apellido Materno, Telefono
-Apellido Materno, Correo electronico
-Telefono, Correo electronico
-Nombre, Apellido Paterno, Apellido Materno
-Nombre, Apellido Paterno, Telefono
-Nombre, Apellido Paterno, Correo electronico
-Nombre, Apellido Materno, Telefono
-Nombre, Apellido Materno, Correo electronico
-Nombre, Telefono, Correo electronico
-Apellido Paterno, Apellido Materno, Telefono
-Apellido Paterno, Apellido Materno, Correo electronico
-Apellido Paterno, Telefono, Correo electronico
-Apellido Materno, Telefono, Correo electronico
-Nombre, Apellido Paterno, Apellido Materno, Telefono
-Nombre, Apellido Paterno, Apellido Materno, Correo electronico
-Nombre, Apellido Paterno, Telefono, Correo electronico
-Nombre, Apellido Materno, Telefono, Correo electronico
-Apellido Paterno, Apellido Materno, Telefono, Correo electronico
-Nombre, Apellido Paterno, Apellido Materno, Telefono, Correo electronico 
+Ajuste requerido en la búsqueda de clientes
+
+Se requiere revisar el cambio realizado en la búsqueda de clientes, ya que actualmente está operando con un solo campo concatenado. Esto está provocando que los resultados sean demasiado abiertos, devolviendo coincidencias parciales que dificultan localizar al cliente correcto.
+
+Por lo anterior, se solicita regresar al esquema de búsqueda con campos separados.
+
+Campos a considerar
+•	Nombre
+•	Apellido paterno
+•	Apellido materno
+
+Detalle de la problemática actual
+
+Actualmente, al capturar un nombre completo en un solo campo (por ejemplo: “Adriana Sánchez Mendoza”), la búsqueda devuelve múltiples registros que solo coinciden parcialmente, como todos aquellos que contienen “Adriana” en el nombre, sin considerar adecuadamente los apellidos.
+
+Esto genera un volumen elevado de resultados y complica la identificación del cliente correcto.
+
+Resultado esperado con el ajuste
+
+Al manejar los campos de forma separada, se espera que la búsqueda:
+•	Permita capturar nombre y apellidos en campos independientes
+•	Mejore la precisión de las coincidencias
+•	Reduzca resultados irrelevantes
+•	Devuelva registros más cercanos al criterio completo de búsqueda
+
+Validaciones requeridas (MuleSoft)
+1.	Validar la viabilidad de revertir la lógica actual de campo concatenado.
+2.	Confirmar que el servicio/API pueda recibir los siguientes campos por separado:
+o	Nombre
+o	Apellido paterno
+o	Apellido materno
+3.	Asegurar que la búsqueda considere la combinación de los campos y no únicamente coincidencias parciales.
+4.	Verificar que el ajuste aplique tanto en:
+o	Perfil 360 (Data Cloud)
+o	API de consulta (consumido por POS)
+5.	Confirmar que el cambio reduzca la cantidad de resultados y mejore la precisión.
+6.	Indicar si este ajuste implica cambios en:
+o	Estructura de entrada
+o	Mapeo
+o	Lógica del servicio
